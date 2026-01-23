@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "dataset-meta-v1.schema.json",
+  "type": "object",
+  "required": [
+    "dataset_version",
+    "job_id",
+    "created_at",
+    "source",
+    "params_snapshot",
+    "pii_policy",
+    "hashes"
+  ],
+  "properties": {
+    "dataset_version": {
+      "type": "string",
+      "enum": [
+        "dataset-v1"
+      ]
+    },
+    "job_id": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "params_snapshot": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "pii_policy": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "hashes": {
+      "type": "object",
+      "required": [
+        "dataset_hash"
+      ],
+      "properties": {
+        "dataset_hash": {
+          "type": "string"
+        },
+        "tables": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

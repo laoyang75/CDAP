@@ -1,0 +1,136 @@
+# Data Insight Service - Default Configuration
+# Version: 0.1.0
+
+version: "0.1.0"
+
+# API Server Configuration
+api:
+  host: "0.0.0.0"
+  port: 8000
+  reload: false  # Set to true in development
+  workers: 1     # Uvicorn workers (increase for production)
+
+# Database Configuration
+database:
+  # MVP: SQLite (single-file database)
+  url: "sqlite:///./jobs.db"
+  # For production, use PostgreSQL:
+  # url: "postgresql://user:password@localhost:5432/data_insight"
+  pool_size: 5
+  max_overflow: 10
+  echo: false  # Set to true to see SQL logs
+
+# Worker Configuration
+worker:
+  # Poll interval (seconds): how long to sleep when no jobs
+  poll_interval: 5
+
+  # Single-threaded FIFO (Override O3)
+  concurrency: 1  # MUST be 1, DO NOT MODIFY
+
+  # Stage timeouts (seconds)
+  timeouts:
+    fetching: 1200       # 20 minutes
+    preprocessing: 600   # 10 minutes
+    analyzing: 1800      # 30 minutes (or cumulative skill timeouts)
+    reporting: 300       # 5 minutes
+
+  # Retry strategies
+  retries:
+    fetching:
+      max_attempts: 3
+      backoff: [1, 4, 16]  # Exponential backoff (seconds)
+    preprocessing:
+      max_attempts: 1  # No retry unless IO error
+    reporting:
+      max_attempts: 2
+
+# Storage Configuration
+storage:
+  # MVP: Local filesystem
+  type: "local"
+  base_path: "./jobs"  # Job working directory root
+
+  # Future: S3/MinIO
+  # type: "s3"
+  # bucket: "data-insight-jobs"
+  # endpoint: "https://s3.amazonaws.com"
+
+  # Retention policy (Phase 2+)
+  retention:
+    bundle_days: 30      # Keep bundle.zip for 30 days
+    raw_days: 7          # Keep raw data for 7 days
+    cleanup_enabled: false  # Disable auto-cleanup in MVP
+
+# Skills Configuration
+skills:
+  # Skills plugins directory
+  plugins_dir: "./analysis_skills/plugins"
+
+  # Default enabled skills (can be overridden in job params)
+  default_enabled:
+    - basic_stats
+
+  # Execution mode
+  execution:
+    mode: "inline"  # "inline" for Phase 0, "subprocess" for Phase 1+
+    parallel: false # MUST be false (Override O3)
+
+  # Default timeout (can be overridden in manifest.yaml)
+  default_timeout: 600  # 10 minutes
+
+# Logging Configuration
+logging:
+  level: "INFO"  # DEBUG | INFO | WARNING | ERROR
+  format: "json"  # json | text
+  file:
+    enabled: true
+    path: "./logs/app.log"
+    rotation: "10 MB"  # Log rotation size
+    retention: "30 days"
+
+  # Redact sensitive fields (Phase 1+)
+  redact_fields:
+    - cdid
+    - imei
+    - oaid
+    - idfa
+    - android_id
+
+# Upstream API Configuration (for fetching stage)
+upstream:
+  base_url: "http://172.17.129.204:6829"
+  endpoints:
+    create_task: "/api/statistical-analysis/v1/task/create"
+    query_task: "/api/statistical-analysis/v1/task/query"
+    download: "/api/statistical-analysis/v1/task/download"
+  timeout: 30  # Request timeout (seconds)
+  retries: 3
+
+# Report Configuration
+report:
+  # LLM enhancement (Phase 3+)
+  llm:
+    enabled: false
+    provider: "openai"  # openai | anthropic
+    model: "gpt-4"
+    api_key: ""  # Set via environment variable: LLM_API_KEY
+
+  # Template directory
+  template_dir: "./src/worker/stages/templates"
+
+# Web UI Configuration
+ui:
+  enabled: true
+  title: "Data Insight Service"
+  page_size: 20  # Jobs per page in list view
+  poll_interval: 3000  # Frontend polling interval (ms)
+
+# Testing and Debugging
+testing:
+  # Simulate errors (for testing failure scenarios)
+  simulate_error:
+    enabled: false
+    stage: "analyzing"  # queued | fetching | preprocessing | analyzing | reporting
+    error_code: "SKILL_FAILED"
+    probability: 0.5  # 0.0 to 1.0
