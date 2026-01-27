@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>脚本管理 - CDID 数据分析平台（后台）</title>
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/bootstrap-icons.min.css">
+    <style>
+        body { background-color: #f8f9fa; }
+        .navbar { background-color: #c0392b; }
+        .sidebar {
+            min-height: calc(100vh - 56px);
+            background-color: #2c3e50;
+            padding: 20px 0;
+        }
+        .sidebar .nav-link {
+            color: #ecf0f1;
+            padding: 12px 20px;
+            transition: all 0.3s;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background-color: #34495e;
+            color: #fff;
+        }
+        .sidebar .nav-link i { margin-right: 10px; width: 20px; }
+        .card { border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+        .script-list { max-height: calc(100vh - 240px); overflow: auto; }
+        .script-item { cursor: pointer; }
+        .script-item.active { background: #e7f3ff; border-left: 3px solid #3498db; }
+        textarea.code { min-height: calc(100vh - 360px); }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/admin">
+                <i class="bi bi-shield-lock"></i> CDID 数据分析平台 - 后台管理
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">
+                            <i class="bi bi-box-arrow-right"></i> 返回用户界面
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> <span data-admin-username>管理员</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#" onclick="AdminAuth.logout(); return false;">退出登录</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-2 sidebar">
+                <nav class="nav flex-column">
+                    <a class="nav-link" href="/admin/pipelines">
+                        <i class="bi bi-diagram-3"></i> 管线管理
+                    </a>
+                    <a class="nav-link active" href="/admin/scripts">
+                        <i class="bi bi-file-code"></i> 脚本编辑
+                    </a>
+                    <a class="nav-link" href="/admin/config">
+                        <i class="bi bi-building"></i> 客户配置
+                    </a>
+                    <a class="nav-link" href="/admin/users">
+                        <i class="bi bi-people"></i> 用户管理
+                    </a>
+                    <a class="nav-link" href="/admin">
+                        <i class="bi bi-activity"></i> 任务监控
+                    </a>
+                </nav>
+            </div>
+
+            <div class="col-md-10 p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h2 class="mb-1"><i class="bi bi-file-code"></i> 脚本管理</h2>
+                        <p class="text-muted mb-0">管理 Python 处理脚本与报告 Prompt（存储于数据库）</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a class="btn btn-outline-secondary" href="/static/templates/analysis_script_template.py" download>
+                            <i class="bi bi-download"></i> 下载分析模板
+                        </a>
+                        <a class="btn btn-outline-secondary" href="/static/templates/prompt_template.txt" download>
+                            <i class="bi bi-download"></i> 下载 Prompt 模板
+                        </a>
+                        <button class="btn btn-outline-secondary" onclick="refreshScripts()">
+                            <i class="bi bi-arrow-repeat"></i> 刷新
+                        </button>
+                        <button class="btn btn-danger" onclick="newScript()">
+                            <i class="bi bi-plus-circle"></i> 新建脚本
+                        </button>
+                    </div>
+                </div>
+
+                <div id="pageAlert" class="alert d-none" role="alert"></div>
+
+                <div class="row g-3">
+                    <div class="col-lg-4">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="row g-2">
+                                    <div class="col-7">
+                                        <input class="form-control" id="searchInput" placeholder="搜索名称/描述">
+                                    </div>
+                                    <div class="col-5">
+                                        <select class="form-select" id="typeFilter">
+                                            <option value="">全部类型</option>
+                                            <option value="analysis">analysis</option>
+                                            <option value="prompt">prompt</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-text mt-2">提示：Prompt 脚本建议 `script_type=prompt`，内容写纯文本。</div>
+                            </div>
+                            <div class="list-group list-group-flush script-list" id="scriptList">
+                                <div class="list-group-item text-muted">正在加载...</div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="fw-semibold mb-2"><i class="bi bi-info-circle"></i> `raw_data.xlsx` 解析约定（标准）</div>
+                                <div class="text-muted small">
+                                    <div>数据来自内网下载的 `raw_data.xlsx`。</div>
+                                    <div class="mt-2">常见列名为“带中文说明”的形式，例如：</div>
+                                    <div class="mono mt-1">sys__boot__id(系统启动 ID), android_id(ANDROID_ID), did(设备主 ID（DID）), oaid(设备 OAID), cdid(客户设备 ID（CDID）)</div>
+                                    <div class="mt-2">脚本建议统一用：</div>
+                                    <div class="mono mt-1">sys__boot__id / android_id / did / oaid / cdid</div>
+                                    <div class="mt-2">读取入口：<span class="mono">src.worker.data_formats.insight_excel</span>（负责列名标准化，其它字段不改名）。</div>
+                                    <div class="mt-2">若 xlsx 分 `dna/daa` 两个 sheet，系统会合并数据并自动补充 <span class="mono">message_type</span> 列（dna/daa）。</div>
+                                    <div class="mt-2">
+                                        若上游字段名新增/变更导致脚本报“缺少字段”，优先在
+                                        <span class="mono">config/column_mapping.yaml</span> 增加别名映射（修改后重启生效）。
+                                    </div>
+                                </div>
+
+                                <div class="alert alert-primary mt-3 mb-2">
+                                    <div class="fw-semibold mb-1"><i class="bi bi-file-code"></i> Analysis 脚本模板（蓝色）</div>
+                                    <div class="small">必须实现：<span class="mono">analyze(input_file, job_info) -&gt; dict</span>，用 pandas 统计输出摘要 JSON。</div>
+                                    <pre class="mono small mb-0 mt-2">from src.worker.data_formats.insight_excel import load_raw_dataframe, standardize_device_columns
+
+def analyze(input_file: str, job_info: dict) -&gt; dict:
+    df = load_raw_dataframe(input_file)
+    df = standardize_device_columns(df, required=("did","sys__boot__id","android_id")).dataframe
+    # TODO: pandas 统计
+    return {"statistics": {...}}</pre>
+                                </div>
+
+                                <div class="alert alert-warning mb-0">
+                                    <div class="fw-semibold mb-1"><i class="bi bi-card-text"></i> Prompt 模板（黄色）</div>
+                                    <div class="small">纯文本，用于控制 Gemini 输出（HTML 报告）。不要使用 skill。</div>
+                                    <pre class="mono small mb-0 mt-2">只输出完整 HTML（含 html/head/body），不要输出 markdown。
+根据输入 JSON 输出：执行摘要、核心指标、异常明细表、原因分析、建议。</pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-8">
+                        <div class="card">
+                            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="fw-semibold" id="editorTitle">未选择脚本</span>
+                                    <span class="text-muted small ms-2" id="editorMeta"></span>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-sm btn-outline-danger" id="deleteBtn" onclick="confirmDelete()" disabled>
+                                        <i class="bi bi-trash"></i> 删除
+                                    </button>
+                                    <button class="btn btn-sm btn-primary" id="saveBtn" onclick="saveScript()" disabled>
+                                        <i class="bi bi-check-circle"></i> 保存
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div id="formError" class="alert alert-danger d-none" role="alert"></div>
+                                <input type="hidden" id="scriptId">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">名称</label>
+                                        <input class="form-control" id="scriptName" placeholder="例如：标准多发检测分析" disabled>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">类型</label>
+                                        <select class="form-select" id="scriptType" disabled>
+                                            <option value="analysis">analysis</option>
+                                            <option value="prompt">prompt</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">状态</label>
+                                        <div class="form-check form-switch mt-2">
+                                            <input class="form-check-input" type="checkbox" id="scriptActive" checked disabled>
+                                            <label class="form-check-label" for="scriptActive">启用</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label">描述</label>
+                                        <input class="form-control" id="scriptDesc" placeholder="脚本用途说明" disabled>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label">内容（Python / Prompt 文本）</label>
+                                        <textarea class="form-control mono code" id="scriptCode" placeholder="选择脚本后开始编辑..." disabled></textarea>
+                                        <div class="form-text">保存后，可在“管线管理”里引用该脚本。</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Login Modal -->
+    <div class="modal fade" id="adminLoginModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">管理员登录</h5>
+                </div>
+                <div class="modal-body">
+                    <div id="adminLoginError" class="alert alert-danger d-none" role="alert"></div>
+                    <form id="adminLoginForm">
+                        <div class="mb-3">
+                            <label class="form-label">用户名</label>
+                            <input class="form-control" name="username" autocomplete="username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">密码</label>
+                            <input class="form-control" name="password" type="password" autocomplete="current-password" required>
+                        </div>
+                        <button type="submit" class="btn btn-danger w-100">登录</button>
+                        <p class="text-muted small mt-2 mb-0">默认账号见 `config/config.yaml`（仅本地调试）。</p>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Modal -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmTitle">确认操作</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="confirmBody">确认继续？</div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-danger" id="confirmOk">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/admin-auth.js"></script>
+    <script>
+        const pageAlert = document.getElementById('pageAlert');
+        const scriptList = document.getElementById('scriptList');
+        const searchInput = document.getElementById('searchInput');
+        const typeFilter = document.getElementById('typeFilter');
+
+        const editorTitle = document.getElementById('editorTitle');
+        const editorMeta = document.getElementById('editorMeta');
+        const formError = document.getElementById('formError');
+
+        const scriptId = document.getElementById('scriptId');
+        const scriptName = document.getElementById('scriptName');
+        const scriptType = document.getElementById('scriptType');
+        const scriptActive = document.getElementById('scriptActive');
+        const scriptDesc = document.getElementById('scriptDesc');
+        const scriptCode = document.getElementById('scriptCode');
+
+        const saveBtn = document.getElementById('saveBtn');
+        const deleteBtn = document.getElementById('deleteBtn');
+
+        let scriptsCache = [];
+        let current = null;
+        let confirmAction = null;
+
+        function showAlert(message, type = 'info') {
+            pageAlert.className = `alert alert-${type}`;
+            pageAlert.textContent = message;
+            pageAlert.classList.remove('d-none');
+        }
+        function hideAlert() {
+            pageAlert.classList.add('d-none');
+            pageAlert.textContent = '';
+        }
+        function setError(message) {
+            if (!message) {
+                formError.classList.add('d-none');
+                formError.textContent = '';
+                return;
+            }
+            formError.textContent = message;
+            formError.classList.remove('d-none');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text ?? '';
+            return div.innerHTML;
+        }
+
+        function formatTime(value) {
+            if (!value) return '';
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return value;
+            return date.toLocaleString('zh-CN', { hour12: false });
+        }
+
+        function openConfirm({ title, body, okText = '确定', okClass = 'btn-danger', onOk }) {
+            confirmAction = onOk;
+            document.getElementById('confirmTitle').textContent = title || '确认操作';
+            document.getElementById('confirmBody').textContent = body || '确认继续？';
+            const okBtn = document.getElementById('confirmOk');
+            okBtn.textContent = okText;
+            okBtn.className = `btn ${okClass}`;
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('confirmModal')).show();
+        }
+
+        document.getElementById('confirmOk').addEventListener('click', async () => {
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('confirmModal')).hide();
+            if (typeof confirmAction === 'function') await confirmAction();
+            confirmAction = null;
+        });
+
+        function setEditorEnabled(enabled) {
+            for (const el of [scriptName, scriptType, scriptActive, scriptDesc, scriptCode]) {
+                el.disabled = !enabled;
+            }
+            saveBtn.disabled = !enabled;
+            deleteBtn.disabled = !enabled || !scriptId.value;
+        }
+
+        function applyFilters() {
+            const q = searchInput.value.trim().toLowerCase();
+            const type = typeFilter.value;
+            return scriptsCache.filter(s => {
+                const matchesType = type ? s.script_type === type : true;
+                const hay = `${s.name || ''} ${s.description || ''}`.toLowerCase();
+                const matchesQuery = q ? hay.includes(q) : true;
+                return matchesType && matchesQuery;
+            });
+        }
+
+        function renderList() {
+            const items = applyFilters();
+            if (!items.length) {
+                scriptList.innerHTML = '<div class="list-group-item text-muted">暂无脚本</div>';
+                return;
+            }
+
+            scriptList.innerHTML = items.map(s => {
+                const activeBadge = s.is_active ? '<span class="badge bg-success">启用</span>' : '<span class="badge bg-secondary">停用</span>';
+                const isActive = current?.id === s.id ? 'active' : '';
+                return `
+                    <button class="list-group-item list-group-item-action script-item ${isActive}" onclick="selectScript(${s.id})">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="fw-semibold">${escapeHtml(s.name)}</div>
+                            ${activeBadge}
+                        </div>
+                        <div class="text-muted small">${escapeHtml(s.script_type)} · #${s.id}</div>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function setCurrent(script) {
+            current = script;
+            setError('');
+            hideAlert();
+
+            if (!current) {
+                editorTitle.textContent = '未选择脚本';
+                editorMeta.textContent = '';
+                scriptId.value = '';
+                scriptName.value = '';
+                scriptType.value = 'analysis';
+                scriptActive.checked = true;
+                scriptDesc.value = '';
+                scriptCode.value = '';
+                setEditorEnabled(false);
+                renderList();
+                return;
+            }
+
+            editorTitle.textContent = current.name || `脚本 #${current.id}`;
+            editorMeta.textContent = `#${current.id} · 创建 ${formatTime(current.created_at)} · 更新 ${formatTime(current.updated_at)}`;
+
+            scriptId.value = String(current.id || '');
+            scriptName.value = current.name || '';
+            scriptType.value = current.script_type || 'analysis';
+            scriptActive.checked = current.is_active ?? true;
+            scriptDesc.value = current.description || '';
+            scriptCode.value = current.code || '';
+            setEditorEnabled(true);
+            renderList();
+        }
+
+        window.selectScript = (id) => {
+            const script = scriptsCache.find(s => s.id === id);
+            if (script) setCurrent(script);
+        };
+
+        async function refreshScripts() {
+            hideAlert();
+            try {
+                await AdminAuth.requireLogin();
+                const response = await AdminAuth.apiFetch('/api/admin/scripts');
+                if (!response.ok) throw new Error('无法加载脚本列表');
+                scriptsCache = await response.json();
+                if (current?.id) {
+                    const refreshed = scriptsCache.find(s => s.id === current.id);
+                    setCurrent(refreshed || null);
+                } else {
+                    setCurrent(null);
+                }
+                renderList();
+            } catch (e) {
+                if (e?.code === 'NOT_AUTHENTICATED') return;
+                showAlert(e?.message || '加载失败', 'warning');
+            }
+        }
+
+        function newScript() {
+            setCurrent({
+                id: null,
+                name: '',
+                description: '',
+                script_type: 'analysis',
+                is_active: true,
+                code: '',
+                created_at: '',
+                updated_at: '',
+            });
+            editorTitle.textContent = '新建脚本';
+            editorMeta.textContent = '';
+            renderList();
+        }
+
+        async function saveScript() {
+            setError('');
+            try {
+                await AdminAuth.requireLogin();
+                const name = scriptName.value.trim();
+                const type = scriptType.value.trim();
+                const code = scriptCode.value;
+                const desc = scriptDesc.value.trim();
+                const active = scriptActive.checked;
+                if (!name) {
+                    setError('请输入脚本名称');
+                    return;
+                }
+                if (!type) {
+                    setError('请选择脚本类型');
+                    return;
+                }
+                if (!code.trim()) {
+                    setError('内容不能为空');
+                    return;
+                }
+                const payload = { name, description: desc, script_type: type, code, is_active: active };
+
+                saveBtn.disabled = true;
+                const id = scriptId.value.trim();
+                const url = id ? `/api/admin/scripts/${id}` : '/api/admin/scripts';
+                const method = id ? 'PUT' : 'POST';
+                const response = await AdminAuth.apiFetch(url, { method, body: JSON.stringify(payload) });
+                if (!response.ok) {
+                    const text = await response.text();
+                    throw new Error(text || '保存失败');
+                }
+                const saved = await response.json();
+                showAlert('保存成功', 'success');
+                await refreshScripts();
+                if (saved?.id) {
+                    const refreshed = scriptsCache.find(s => s.id === saved.id);
+                    if (refreshed) setCurrent(refreshed);
+                }
+            } catch (e) {
+                if (e?.code === 'NOT_AUTHENTICATED') return;
+                setError(e?.message || '保存失败');
+            } finally {
+                saveBtn.disabled = false;
+            }
+        }
+
+        function confirmDelete() {
+            const id = scriptId.value.trim();
+            if (!id) return;
+            openConfirm({
+                title: '删除脚本',
+                body: `确认删除脚本：${scriptName.value || id}？此操作不可恢复。`,
+                okText: '删除',
+                okClass: 'btn-danger',
+                onOk: deleteScript,
+            });
+        }
+
+        async function deleteScript() {
+            setError('');
+            const id = scriptId.value.trim();
+            if (!id) return;
+            try {
+                await AdminAuth.requireLogin();
+                const response = await AdminAuth.apiFetch(`/api/admin/scripts/${id}`, { method: 'DELETE' });
+                if (!(response.status === 204 || response.ok)) {
+                    throw new Error('删除失败');
+                }
+                showAlert('已删除', 'success');
+                setCurrent(null);
+                await refreshScripts();
+            } catch (e) {
+                if (e?.code === 'NOT_AUTHENTICATED') return;
+                showAlert(e?.message || '删除失败', 'warning');
+            }
+        }
+
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchInput._timer);
+            searchInput._timer = setTimeout(renderList, 150);
+        });
+        typeFilter.addEventListener('change', renderList);
+
+        document.addEventListener('DOMContentLoaded', refreshScripts);
+        window.newScript = newScript;
+    </script>
+</body>
+</html>

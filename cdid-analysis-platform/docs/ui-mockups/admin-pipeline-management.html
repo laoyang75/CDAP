@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管线管理 - CDID 数据分析平台（后台）</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .navbar {
+            background-color: #c0392b;
+        }
+        .sidebar {
+            min-height: calc(100vh - 56px);
+            background-color: #2c3e50;
+            padding: 20px 0;
+        }
+        .sidebar .nav-link {
+            color: #ecf0f1;
+            padding: 12px 20px;
+            transition: all 0.3s;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background-color: #34495e;
+            color: #fff;
+        }
+        .sidebar .nav-link i {
+            margin-right: 10px;
+            width: 20px;
+        }
+        .card {
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .pipeline-card {
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .pipeline-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+        .badge-pipeline {
+            font-size: 0.85rem;
+            padding: 0.4em 0.7em;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-dark navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-shield-lock"></i> CDID 数据分析平台 - 后台管理
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="user-create-task.html">
+                            <i class="bi bi-box-arrow-right"></i> 返回用户界面
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> 管理员
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#">个人设置</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#">退出登录</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <div class="col-md-2 sidebar">
+                <nav class="nav flex-column">
+                    <a class="nav-link active" href="admin-pipeline-management.html">
+                        <i class="bi bi-diagram-3"></i> 管线管理
+                    </a>
+                    <a class="nav-link" href="admin-script-editor.html">
+                        <i class="bi bi-file-code"></i> 脚本编辑
+                    </a>
+                    <a class="nav-link" href="admin-client-config.html">
+                        <i class="bi bi-building"></i> 客户配置
+                    </a>
+                    <a class="nav-link" href="admin-user-management.html">
+                        <i class="bi bi-people"></i> 用户管理
+                    </a>
+                    <a class="nav-link" href="admin-task-monitoring.html">
+                        <i class="bi bi-activity"></i> 任务监控
+                    </a>
+                    <div class="mt-4 border-top pt-3">
+                        <a class="nav-link" href="#">
+                            <i class="bi bi-gear"></i> 系统设置
+                        </a>
+                        <a class="nav-link" href="#">
+                            <i class="bi bi-file-text"></i> 系统日志
+                        </a>
+                    </div>
+                </nav>
+            </div>
+
+            <!-- 主内容区 -->
+            <div class="col-md-10 p-4">
+                <!-- 页面标题 -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h2><i class="bi bi-diagram-3"></i> 管线管理</h2>
+                        <p class="text-muted mb-0">配置和管理数据分析管线（Python脚本 + Gemini Skill）</p>
+                    </div>
+                    <div>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPipelineModal">
+                            <i class="bi bi-plus-lg"></i> 添加管线
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 统计卡片 -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h3 class="mb-0">3</h3>
+                                <p class="text-muted mb-0">活跃管线</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h3 class="mb-0">5</h3>
+                                <p class="text-muted mb-0">可用 Skill</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h3 class="mb-0">127</h3>
+                                <p class="text-muted mb-0">今日执行次数</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h3 class="mb-0">95.2%</h3>
+                                <p class="text-muted mb-0">成功率</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 管线列表 -->
+                <div class="row">
+                    <!-- 管线卡片 1 -->
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card pipeline-card h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <h5 class="card-title mb-0">
+                                        <i class="bi bi-diagram-2 text-primary"></i>
+                                        标准多发检测管线
+                                    </h5>
+                                    <span class="badge bg-success badge-pipeline">活跃</span>
+                                </div>
+
+                                <p class="card-text text-muted small mb-3">
+                                    检测多个 CDID 共享相同设备指纹的情况，输出多发组列表和风险评分
+                                </p>
+
+                                <div class="mb-2">
+                                    <small class="text-muted">Python 脚本：</small>
+                                    <div>
+                                        <code class="small">duplicate_detector.py</code>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <small class="text-muted">Gemini Skill：</small>
+                                    <div>
+                                        <code class="small">duplicate_report</code>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center text-muted small mb-3">
+                                    <span>
+                                        <i class="bi bi-clock-history"></i>
+                                        创建于 2026-01-15
+                                    </span>
+                                    <span>
+                                        <i class="bi bi-check-circle text-success"></i>
+                                        执行 85 次
+                                    </span>
+                                </div>
+
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-sm btn-outline-primary"
+                                            onclick="editPipeline('pipeline_1')">
+                                        <i class="bi bi-pencil"></i> 编辑
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary"
+                                            onclick="viewPipelineDetails('pipeline_1')">
+                                        <i class="bi bi-eye"></i> 查看详情
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 管线卡片 2 -->
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card pipeline-card h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <h5 class="card-title mb-0">
+                                        <i class="bi bi-shield-exclamation text-danger"></i>
+                                        高级风险分析管线
+                                    </h5>
+                                    <span class="badge bg-success badge-pipeline">活跃</span>
+                                </div>
+
+                                <p class="card-text text-muted small mb-3">
+                                    综合分析 rc_rules、rc_scenes 等风控字段，识别高风险设备和异常行为
+                                </p>
+
+                                <div class="mb-2">
+                                    <small class="text-muted">Python 脚本：</small>
+                                    <div>
+                                        <code class="small">risk_analyzer.py</code>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <small class="text-muted">Gemini Skill：</small>
+                                    <div>
+                                        <code class="small">risk_report</code>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center text-muted small mb-3">
+                                    <span>
+                                        <i class="bi bi-clock-history"></i>
+                                        创建于 2026-01-18
+                                    </span>
+                                    <span>
+                                        <i class="bi bi-check-circle text-success"></i>
+                                        执行 32 次
+                                    </span>
+                                </div>
+
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-sm btn-outline-primary"
+                                            onclick="editPipeline('pipeline_2')">
+                                        <i class="bi bi-pencil"></i> 编辑
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary"
+                                            onclick="viewPipelineDetails('pipeline_2')">
+                                        <i class="bi bi-eye"></i> 查看详情
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 管线卡片 3 -->
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card pipeline-card h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <h5 class="card-title mb-0">
+                                        <i class="bi bi-graph-up text-warning"></i>
+                                        时序碰撞分析管线
+                                    </h5>
+                                    <span class="badge bg-success badge-pipeline">活跃</span>
+                                </div>
+
+                                <p class="card-text text-muted small mb-3">
+                                    基于时间序列分析设备 ID 与 CDID 的碰撞关系，发现异常关联模式
+                                </p>
+
+                                <div class="mb-2">
+                                    <small class="text-muted">Python 脚本：</small>
+                                    <div>
+                                        <code class="small">impact_time_series.py</code>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <small class="text-muted">Gemini Skill：</small>
+                                    <div>
+                                        <code class="small">impact_report</code>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center text-muted small mb-3">
+                                    <span>
+                                        <i class="bi bi-clock-history"></i>
+                                        创建于 2026-01-20
+                                    </span>
+                                    <span>
+                                        <i class="bi bi-check-circle text-success"></i>
+                                        执行 10 次
+                                    </span>
+                                </div>
+
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-sm btn-outline-primary"
+                                            onclick="editPipeline('pipeline_3')">
+                                        <i class="bi bi-pencil"></i> 编辑
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary"
+                                            onclick="viewPipelineDetails('pipeline_3')">
+                                        <i class="bi bi-eye"></i> 查看详情
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 添加管线占位卡片 -->
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card h-100 border-dashed" style="border: 2px dashed #dee2e6;">
+                            <div class="card-body d-flex flex-column justify-content-center align-items-center text-center">
+                                <i class="bi bi-plus-circle display-1 text-muted mb-3"></i>
+                                <h5 class="text-muted">添加新管线</h5>
+                                <p class="text-muted small mb-3">
+                                    创建新的数据分析管线
+                                </p>
+                                <button class="btn btn-outline-primary"
+                                        data-bs-toggle="modal" data-bs-target="#addPipelineModal">
+                                    <i class="bi bi-plus-lg"></i> 添加管线
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加管线模态框 -->
+    <div class="modal fade" id="addPipelineModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-plus-circle"></i> 添加新管线
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addPipelineForm">
+                        <!-- 管线名称 -->
+                        <div class="mb-3">
+                            <label for="pipelineName" class="form-label">
+                                管线名称 <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="pipelineName"
+                                   placeholder="例如：标准多发检测管线" required>
+                            <div class="form-text">
+                                简洁明了的名称，用于在创建任务时选择
+                            </div>
+                        </div>
+
+                        <!-- 管线描述 -->
+                        <div class="mb-3">
+                            <label for="pipelineDesc" class="form-label">描述</label>
+                            <textarea class="form-control" id="pipelineDesc" rows="2"
+                                      placeholder="描述这个管线的功能和用途"></textarea>
+                        </div>
+
+                        <!-- 脚本目录 -->
+                        <div class="mb-3">
+                            <label for="scriptDirectory" class="form-label">
+                                脚本目录 <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="scriptDirectory"
+                                   placeholder="例如：/app/scripts/duplicate_detection" required>
+                            <div class="form-text">
+                                <i class="bi bi-info-circle"></i>
+                                指定Python脚本所在的目录，格式：用户信息+时间信息+分析编号
+                            </div>
+                        </div>
+
+                        <!-- Python 脚本文件名 -->
+                        <div class="mb-3">
+                            <label for="pythonScript" class="form-label">
+                                Python 脚本文件名 <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="pythonScript"
+                                   placeholder="例如：analyzer.py" required>
+                            <div class="form-text">
+                                <i class="bi bi-info-circle"></i>
+                                脚本必须实现标准接口：
+                                <code>def analyze(input_file, user_info, start_date, end_date) -> dict</code>
+                            </div>
+                        </div>
+
+                        <!-- Gemini Skill 名称 -->
+                        <div class="mb-3">
+                            <label for="geminiSkill" class="form-label">
+                                Gemini Skill 名称 <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="geminiSkill"
+                                   placeholder="例如：duplicate_report" required>
+                            <div class="form-text">
+                                <i class="bi bi-info-circle"></i>
+                                Skill 必须已在 Gemini CLI 中配置好，可通过
+                                <a href="admin-script-editor.html">脚本编辑</a> 页面编辑
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="savePipeline()">
+                        <i class="bi bi-check-circle"></i> 保存管线
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 编辑管线
+        function editPipeline(pipelineId) {
+            alert(`编辑管线：${pipelineId}`);
+            // 实际应用中，这里会打开编辑模态框，加载管线数据
+        }
+
+        // 查看管线详情
+        function viewPipelineDetails(pipelineId) {
+            alert(`查看管线详情：${pipelineId}\n\n包括：\n- 执行历史\n- 成功率统计\n- 平均耗时\n- 最近错误日志`);
+            // 实际应用中，这里会跳转到详情页面
+        }
+
+        // 保存管线
+        function savePipeline() {
+            const form = document.getElementById('addPipelineForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const pipelineName = document.getElementById('pipelineName').value;
+            const pipelineDesc = document.getElementById('pipelineDesc').value;
+            const pythonScript = document.getElementById('pythonScript').value;
+            const geminiSkill = document.getElementById('geminiSkill').value;
+
+            alert(`管线已保存！\n\n名称：${pipelineName}\n脚本：${pythonScript}\nSkill：${geminiSkill}`);
+
+            // 实际应用中，这里会发送 POST 请求到后端
+            // 关闭模态框并刷新页面
+            bootstrap.Modal.getInstance(document.getElementById('addPipelineModal')).hide();
+            location.reload();
+        }
+    </script>
+</body>
+</html>

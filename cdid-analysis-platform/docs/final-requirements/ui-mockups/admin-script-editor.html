@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>脚本编辑 - CDID 数据分析平台（后台）</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .navbar {
+            background-color: #c0392b;
+        }
+        .sidebar {
+            min-height: calc(100vh - 56px);
+            background-color: #2c3e50;
+            padding: 20px 0;
+        }
+        .sidebar .nav-link {
+            color: #ecf0f1;
+            padding: 12px 20px;
+            transition: all 0.3s;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background-color: #34495e;
+            color: #fff;
+        }
+        .sidebar .nav-link i {
+            margin-right: 10px;
+            width: 20px;
+        }
+        .card {
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .file-list {
+            max-height: calc(100vh - 250px);
+            overflow-y: auto;
+        }
+        .file-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #dee2e6;
+            transition: all 0.2s;
+        }
+        .file-item:hover {
+            background-color: #f8f9fa;
+        }
+        .file-item.active {
+            background-color: #e7f3ff;
+            border-left: 3px solid #3498db;
+        }
+        .code-editor {
+            min-height: calc(100vh - 300px);
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+        }
+        .code-editor:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        .editor-header {
+            background-color: #2d2d30;
+            color: #cccccc;
+            padding: 10px 15px;
+            border-radius: 4px 4px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .file-type-badge {
+            font-size: 0.75rem;
+            padding: 0.25em 0.5em;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-dark navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-shield-lock"></i> CDID 数据分析平台 - 后台管理
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="user-create-task.html">
+                            <i class="bi bi-box-arrow-right"></i> 返回用户界面
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> 管理员
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#">个人设置</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#">退出登录</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <div class="col-md-2 sidebar">
+                <nav class="nav flex-column">
+                    <a class="nav-link" href="admin-pipeline-management.html">
+                        <i class="bi bi-diagram-3"></i> 管线管理
+                    </a>
+                    <a class="nav-link active" href="admin-script-editor.html">
+                        <i class="bi bi-file-code"></i> 脚本编辑
+                    </a>
+                    <a class="nav-link" href="admin-client-config.html">
+                        <i class="bi bi-building"></i> 客户配置
+                    </a>
+                    <a class="nav-link" href="admin-user-management.html">
+                        <i class="bi bi-people"></i> 用户管理
+                    </a>
+                    <a class="nav-link" href="admin-task-monitoring.html">
+                        <i class="bi bi-activity"></i> 任务监控
+                    </a>
+                    <div class="mt-4 border-top pt-3">
+                        <a class="nav-link" href="#">
+                            <i class="bi bi-gear"></i> 系统设置
+                        </a>
+                        <a class="nav-link" href="#">
+                            <i class="bi bi-file-text"></i> 系统日志
+                        </a>
+                    </div>
+                </nav>
+            </div>
+
+            <!-- 主内容区 -->
+            <div class="col-md-10 p-4">
+                <!-- 页面标题 -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h2><i class="bi bi-file-code"></i> 脚本编辑</h2>
+                        <p class="text-muted mb-0">编辑 Python 数据处理脚本和 Gemini Skill 配置</p>
+                    </div>
+                    <div>
+                        <button class="btn btn-success" id="saveBtn" disabled>
+                            <i class="bi bi-save"></i> 保存
+                        </button>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- 左侧：文件列表 -->
+                    <div class="col-md-3">
+                        <!-- Python 脚本 -->
+                        <div class="card mb-3">
+                            <div class="card-header bg-primary text-white">
+                                <h6 class="mb-0">
+                                    <i class="bi bi-filetype-py"></i> Python 脚本
+                                </h6>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="file-list" id="pythonFileList">
+                                    <div class="file-item active" data-type="python" data-file="duplicate_detector.py">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span>
+                                                <i class="bi bi-file-earmark-code text-primary"></i>
+                                                duplicate_detector.py
+                                            </span>
+                                            <span class="badge bg-success file-type-badge">PY</span>
+                                        </div>
+                                        <small class="text-muted">多发检测</small>
+                                    </div>
+                                    <div class="file-item" data-type="python" data-file="risk_analyzer.py">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span>
+                                                <i class="bi bi-file-earmark-code text-primary"></i>
+                                                risk_analyzer.py
+                                            </span>
+                                            <span class="badge bg-success file-type-badge">PY</span>
+                                        </div>
+                                        <small class="text-muted">风险分析</small>
+                                    </div>
+                                    <div class="file-item" data-type="python" data-file="impact_time_series.py">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span>
+                                                <i class="bi bi-file-earmark-code text-primary"></i>
+                                                impact_time_series.py
+                                            </span>
+                                            <span class="badge bg-success file-type-badge">PY</span>
+                                        </div>
+                                        <small class="text-muted">时序碰撞</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-footer text-center">
+                                <button class="btn btn-sm btn-outline-primary w-100" onclick="addNewScript('python')">
+                                    <i class="bi bi-plus"></i> 新建 Python 脚本
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Gemini Skill -->
+                        <div class="card">
+                            <div class="card-header bg-warning text-dark">
+                                <h6 class="mb-0">
+                                    <i class="bi bi-star"></i> Gemini Skill
+                                </h6>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="file-list" id="skillFileList">
+                                    <div class="file-item" data-type="skill" data-file="duplicate_report">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span>
+                                                <i class="bi bi-file-earmark-text text-warning"></i>
+                                                duplicate_report
+                                            </span>
+                                            <span class="badge bg-warning file-type-badge">SKILL</span>
+                                        </div>
+                                        <small class="text-muted">多发报告生成</small>
+                                    </div>
+                                    <div class="file-item" data-type="skill" data-file="risk_report">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span>
+                                                <i class="bi bi-file-earmark-text text-warning"></i>
+                                                risk_report
+                                            </span>
+                                            <span class="badge bg-warning file-type-badge">SKILL</span>
+                                        </div>
+                                        <small class="text-muted">风险报告生成</small>
+                                    </div>
+                                    <div class="file-item" data-type="skill" data-file="impact_report">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span>
+                                                <i class="bi bi-file-earmark-text text-warning"></i>
+                                                impact_report
+                                            </span>
+                                            <span class="badge bg-warning file-type-badge">SKILL</span>
+                                        </div>
+                                        <small class="text-muted">碰撞报告生成</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-footer text-center">
+                                <button class="btn btn-sm btn-outline-warning w-100" data-bs-toggle="modal" data-bs-target="#importSkillModal">
+                                    <i class="bi bi-upload"></i> 配置 Skill
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右侧：代码编辑器 -->
+                    <div class="col-md-9">
+                        <div class="card">
+                            <div class="editor-header">
+                                <div>
+                                    <span class="badge bg-primary me-2" id="fileTypeBadge">Python</span>
+                                    <span id="currentFileName">duplicate_detector.py</span>
+                                    <span class="ms-3 text-muted small" id="filePathDisplay">
+                                        /app/scripts/duplicate_detection/
+                                    </span>
+                                </div>
+                                <div>
+                                    <span class="text-muted small me-3" id="charCount">0 字符</span>
+                                    <span class="text-muted small" id="lineCount">0 行</span>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <textarea class="code-editor w-100" id="codeEditor" spellcheck="false">"""
+CDID 多发检测分析脚本
+
+此脚本实现标准接口，用于检测多个 CDID 共享相同设备指纹的情况。
+
+接口规范：
+    def analyze(input_file: str, user_info: dict, start_date: str, end_date: str) -> dict
+
+参数：
+    input_file: 原始数据文件路径（Excel）
+    user_info: 用户信息字典 {'user_id': '...', 'task_id': '...'}
+    start_date: 开始日期 (YYYY-MM-DD)
+    end_date: 结束日期 (YYYY-MM-DD)
+
+返回：
+    dict: 分析结果，格式如下：
+        {
+            "summary": {...},
+            "duplicate": [...],
+            "metadata": {...}
+        }
+"""
+
+import pandas as pd
+from typing import Dict, List
+from datetime import datetime
+
+
+def analyze(input_file: str, user_info: dict, start_date: str, end_date: str) -> dict:
+    """
+    主分析函数
+    """
+    # 读取数据
+    df = pd.read_excel(input_file)
+
+    # 数据预处理
+    df = preprocess_data(df)
+
+    # 执行多发检测
+    duplicate_results = detect_duplicate(df)
+
+    # 生成汇总统计
+    summary = generate_summary(df, duplicate_results)
+
+    # 构建返回结果
+    result = {
+        "job_id": user_info.get('task_id'),
+        "analyzed_at": datetime.now().isoformat(),
+        "date_range": {
+            "start": start_date,
+            "end": end_date
+        },
+        "summary": summary,
+        "duplicate": duplicate_results
+    }
+
+    return result
+
+
+def preprocess_data(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    数据预处理
+    """
+    # 移除空值
+    df = df.dropna(subset=['cdid', 'did', 'oaid', 'imei'])
+
+    # 数据类型转换
+    df['cdid'] = df['cdid'].astype(str)
+    df['did'] = df['did'].astype(str)
+
+    return df
+
+
+def detect_duplicate(df: pd.DataFrame) -> List[Dict]:
+    """
+    多发检测：检测重复的设备指纹
+    """
+    # 按设备指纹（did, oaid, imei）分组
+    groups = df.groupby(['did', 'oaid', 'imei'])['cdid'].apply(list)
+
+    # 筛选出重复的组（cdid 数量 > 1）
+    duplicates = groups[groups.apply(len) > 1]
+
+    results = []
+    for idx, (fingerprint, cdid_list) in enumerate(duplicates.items()):
+        results.append({
+            "group_id": idx + 1,
+            "cdid_count": len(cdid_list),
+            "cdid_list": cdid_list,
+            "fingerprint": {
+                "did": fingerprint[0],
+                "oaid": fingerprint[1],
+                "imei": fingerprint[2]
+            }
+        })
+
+    return results
+
+
+def generate_summary(df: pd.DataFrame, duplicate_results: List[Dict]) -> Dict:
+    """
+    生成汇总统计
+    """
+    return {
+        "total_cdid": len(df),
+        "duplicate_group_count": len(duplicate_results),
+        "duplicate_cdid_count": sum(r['cdid_count'] for r in duplicate_results)
+    }
+
+
+if __name__ == "__main__":
+    # 测试代码
+    result = analyze(
+        input_file="test_data.xlsx",
+        user_info={"task_id": "test_001"},
+        start_date="2026-01-01",
+        end_date="2026-01-07"
+    )
+    print(result)
+</textarea>
+                            </div>
+                            <div class="card-footer bg-light">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check-circle"></i> 语法正确
+                                        </span>
+                                        <span class="text-muted small ms-2">
+                                            最后保存：2026-01-23 15:30
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <button class="btn btn-sm btn-outline-secondary me-2">
+                                            <i class="bi bi-arrow-clockwise"></i> 重载
+                                        </button>
+                                        <button class="btn btn-sm btn-success" id="saveBtn2">
+                                            <i class="bi bi-save"></i> 保存
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 配置 Skill 模态框 -->
+    <div class="modal fade" id="importSkillModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-upload"></i> 配置/引用 Gemini Skill
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>说明：</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Skill/扩展需由管理员在 Gemini CLI 环境中预先安装/配置（平台不负责复制/安装）</li>
+                            <li>此处用于登记/引用 Skill 名称（调用时使用 <code>@skill_name</code>）</li>
+                            <li>如新增/更新 Skill 后需要生效，请按现网要求重启 Gemini CLI</li>
+                        </ul>
+                    </div>
+
+                    <form id="importSkillForm">
+                        <div class="mb-3">
+                            <label for="skillDirectory" class="form-label">
+                                Skill 参考路径（可选）
+                            </label>
+                            <input type="text" class="form-control" id="skillDirectory"
+                                   placeholder="例如：~/.gemini/skills/impact_report">
+                            <div class="form-text">
+                                可留空；仅用于协助定位/排查
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-outline-secondary w-100" onclick="browseDirectory()">
+                                <i class="bi bi-folder2-open"></i> 浏览目录（可选）
+                            </button>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="skillName" class="form-label">
+                                Skill 名称 <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="skillName"
+                                   placeholder="例如：duplicate_report" required>
+                            <div class="form-text">
+                                系统会自动从 SKILL.md 中读取，也可手动输入
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="importSkill()">
+                        <i class="bi bi-check-circle"></i> 导入
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 模拟的脚本内容数据库
+        const scriptContents = {
+            'duplicate_detector.py': document.getElementById('codeEditor').value,
+            'risk_analyzer.py': `"""风险分析脚本"""\nimport pandas as pd\n\ndef analyze(input_file, user_info, start_date, end_date):\n    # TODO: 实现风险分析逻辑\n    pass`,
+            'impact_time_series.py': `"""时序碰撞分析脚本"""\nimport pandas as pd\n\ndef analyze(input_file, user_info, start_date, end_date):\n    # TODO: 实现碰撞分析逻辑\n    pass`,
+            'duplicate_report': `---\nname: duplicate_report\ndescription: 生成多发检测分析报告\n---\n\n你是一位专业的数据分析师。根据下面的 CDID 多发检测分析结果，生成一份专业的 HTML 格式分析报告。\n\n要求：\n1. 使用 HTML 格式输出（包含完整的 html/head/body 标签）\n2. 样式美观（可内联 CSS 或使用 Bootstrap CDN）\n3. 重点突出多发检测结果，用颜色标记高风险项\n4. 包含执行摘要、详细数据表格、结论建议\n\n请直接输出完整的 HTML 代码。`,
+            'risk_report': `---\nname: risk_report\ndescription: 生成风险分析报告\n---\n\n生成风险分析报告...`,
+            'impact_report': `---\nname: impact_report\ndescription: 生成碰撞检测报告\n---\n\n生成碰撞检测报告...`
+        };
+
+        const codeEditor = document.getElementById('codeEditor');
+        const currentFileName = document.getElementById('currentFileName');
+        const fileTypeBadge = document.getElementById('fileTypeBadge');
+        const filePathDisplay = document.getElementById('filePathDisplay');
+        const charCount = document.getElementById('charCount');
+        const lineCount = document.getElementById('lineCount');
+        const saveBtn = document.getElementById('saveBtn');
+        const saveBtn2 = document.getElementById('saveBtn2');
+
+        let currentFile = 'duplicate_detector.py';
+        let currentType = 'python';
+        let isModified = false;
+
+        // 文件切换
+        document.querySelectorAll('.file-item').forEach(item => {
+            item.addEventListener('click', function() {
+                // 移除所有 active 类
+                document.querySelectorAll('.file-item').forEach(i => i.classList.remove('active'));
+
+                // 添加 active 类
+                this.classList.add('active');
+
+                // 获取文件信息
+                const fileName = this.dataset.file;
+                const fileType = this.dataset.type;
+
+                // 加载文件内容
+                loadFile(fileName, fileType);
+            });
+        });
+
+        // 加载文件
+        function loadFile(fileName, fileType) {
+            currentFile = fileName;
+            currentType = fileType;
+
+            // 更新编辑器内容
+            codeEditor.value = scriptContents[fileName] || '// 文件内容加载中...';
+
+            // 更新文件信息
+            currentFileName.textContent = fileName;
+            fileTypeBadge.textContent = fileType === 'python' ? 'Python' : 'Gemini Skill';
+            fileTypeBadge.className = fileType === 'python' ? 'badge bg-primary me-2' : 'badge bg-warning me-2';
+
+            // 更新路径显示
+            if (fileType === 'python') {
+                filePathDisplay.textContent = '/app/scripts/.../' + fileName;
+            } else {
+                filePathDisplay.textContent = '~/.gemini/skills/' + fileName + '/';
+            }
+
+            // 更新统计
+            updateStats();
+
+            // 重置修改标记
+            isModified = false;
+            updateSaveButton();
+        }
+
+        // 监听编辑器变化
+        codeEditor.addEventListener('input', function() {
+            isModified = true;
+            updateStats();
+            updateSaveButton();
+        });
+
+        // 更新统计信息
+        function updateStats() {
+            const text = codeEditor.value;
+            charCount.textContent = text.length + ' 字符';
+            lineCount.textContent = text.split('\n').length + ' 行';
+        }
+
+        // 更新保存按钮状态
+        function updateSaveButton() {
+            saveBtn.disabled = !isModified;
+            saveBtn2.disabled = !isModified;
+        }
+
+        // 保存文件
+        saveBtn.addEventListener('click', saveFile);
+        saveBtn2.addEventListener('click', saveFile);
+
+        function saveFile() {
+            // 保存到模拟数据库
+            scriptContents[currentFile] = codeEditor.value;
+
+            // 显示成功提示
+            alert(`文件 ${currentFile} 已保存！`);
+
+            // 重置修改标记
+            isModified = false;
+            updateSaveButton();
+        }
+
+        // 新建 Python 脚本
+        function addNewScript(type) {
+            if (type === 'python') {
+                const fileName = prompt('请输入新 Python 脚本的名称（含 .py 扩展名）：');
+                if (fileName) {
+                    alert(`创建新脚本：${fileName}`);
+                    // 实际应用中，这里会创建文件并添加到列表
+                }
+            }
+        }
+
+        // 浏览目录（实际应用中会调用系统文件选择器）
+        function browseDirectory() {
+            alert('打开文件浏览器选择 Skill 目录...\n\n（实际应用中会调用系统文件选择对话框）');
+            // 模拟选择
+            document.getElementById('skillDirectory').value = '/path/to/skills/new_skill';
+            document.getElementById('skillName').value = 'new_skill';
+        }
+
+        // 配置 Skill
+        function importSkill() {
+            const form = document.getElementById('importSkillForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const directory = document.getElementById('skillDirectory').value;
+            const skillName = document.getElementById('skillName').value;
+
+            alert(`Skill 导入成功！\n\n目录：${directory}\n名称：${skillName}\n\n请重启 Gemini CLI 使其生效。`);
+
+            // 关闭模态框并刷新
+            bootstrap.Modal.getInstance(document.getElementById('importSkillModal')).hide();
+            location.reload();
+        }
+
+        // 初始化统计
+        updateStats();
+    </script>
+</body>
+</html>

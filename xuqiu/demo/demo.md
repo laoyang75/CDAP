@@ -6,3 +6,7 @@
 据类型：dna 和 daa
 数据时间范围： 2025-12-01 ~ 2025-12-17
 最后用 report skill 生成专业的分析报告
+
+
+
+com.barrencautio.bbscb

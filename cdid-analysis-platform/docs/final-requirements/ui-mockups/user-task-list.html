@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的任务 - CDID 数据分析平台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .navbar {
+            background-color: #2c3e50;
+        }
+        .card {
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .badge-status {
+            font-size: 0.85rem;
+            padding: 0.35em 0.65em;
+        }
+        .status-queued {
+            background-color: #95a5a6;
+        }
+        .status-fetching {
+            background-color: #3498db;
+        }
+        .status-analyzing {
+            background-color: #f39c12;
+        }
+        .status-reporting {
+            background-color: #9b59b6;
+        }
+        .status-done {
+            background-color: #27ae60;
+        }
+        .status-failed {
+            background-color: #e74c3c;
+        }
+        .table-hover tbody tr {
+            cursor: pointer;
+        }
+        .progress {
+            height: 8px;
+        }
+        .filter-section {
+            background-color: #ecf0f1;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-dark navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-graph-up-arrow"></i> CDID 数据分析平台
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="user-create-task.html">
+                            <i class="bi bi-plus-circle"></i> 创建任务
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="user-task-list.html">
+                            <i class="bi bi-list-ul"></i> 我的任务
+                        </a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center">
+                    <span class="text-white me-3">
+                        <i class="bi bi-person-circle"></i> 张三
+                    </span>
+                    <a href="#" class="btn btn-outline-light btn-sm">退出</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <div class="container-fluid mt-4 mb-5">
+        <!-- 页面标题 -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2><i class="bi bi-list-check"></i> 我的任务</h2>
+                <p class="text-muted mb-0">查看和管理你创建的分析任务</p>
+            </div>
+            <div>
+                <a href="user-create-task.html" class="btn btn-primary">
+                    <i class="bi bi-plus-lg"></i> 创建新任务
+                </a>
+            </div>
+        </div>
+
+        <!-- 筛选区域 -->
+        <div class="filter-section">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label mb-1">状态筛选</label>
+                    <select class="form-select form-select-sm">
+                        <option value="">全部状态</option>
+                        <option value="queued">排队中</option>
+                        <option value="fetching">获取数据</option>
+                        <option value="analyzing">分析中</option>
+                        <option value="reporting">生成报告</option>
+                        <option value="done">已完成</option>
+                        <option value="failed">失败</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label mb-1">管线筛选</label>
+                    <select class="form-select form-select-sm">
+                        <option value="">全部管线</option>
+                        <option value="pipeline_1">标准多发检测管线</option>
+                        <option value="pipeline_2">高级风险分析管线</option>
+                        <option value="pipeline_3">时序碰撞分析管线</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label mb-1">搜索</label>
+                    <input type="text" class="form-control form-control-sm"
+                           placeholder="搜索任务名称或包名...">
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-secondary btn-sm w-100">
+                        <i class="bi bi-search"></i> 搜索
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 任务列表卡片 -->
+        <div class="card">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 25%">任务名称</th>
+                                <th style="width: 15%">分析管线</th>
+                                <th style="width: 15%">包名</th>
+                                <th style="width: 12%">状态</th>
+                                <th style="width: 15%">进度</th>
+                                <th style="width: 13%">创建时间</th>
+                                <th style="width: 5%" class="text-center">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="taskTableBody">
+                            <!-- 任务行 1: 已完成 -->
+                            <tr onclick="window.location.href='user-task-detail.html?id=01J1'">
+                                <td>
+                                    <strong>12月数据分析</strong>
+                                </td>
+                                <td>
+                                    <small class="text-muted">标准多发检测管线</small>
+                                </td>
+                                <td>
+                                    <code class="small">com.example.app</code>
+                                </td>
+                                <td>
+                                    <span class="badge status-done badge-status">
+                                        <i class="bi bi-check-circle"></i> 已完成
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-success" style="width: 100%"></div>
+                                    </div>
+                                    <small class="text-muted">100%</small>
+                                </td>
+                                <td>
+                                    <small>2026-01-23 14:30</small>
+                                </td>
+                                <td class="text-center">
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-link text-secondary" type="button"
+                                                data-bs-toggle="dropdown" onclick="event.stopPropagation()">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li>
+                                                <a class="dropdown-item" href="user-task-detail.html?id=01J1">
+                                                    <i class="bi bi-eye"></i> 查看详情
+                                                </a>
+                                            </li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <a class="dropdown-item text-danger" href="#"
+                                                   onclick="deleteTask('01J1'); return false;">
+                                                    <i class="bi bi-trash"></i> 删除
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- 任务行 2: 分析中 -->
+                            <tr onclick="window.location.href='user-task-detail.html?id=01J2'">
+                                <td>
+                                    <strong>1月新用户分析</strong>
+                                </td>
+                                <td>
+                                    <small class="text-muted">高级风险分析管线</small>
+                                </td>
+                                <td>
+                                    <code class="small">com.test.app2</code>
+                                </td>
+                                <td>
+                                    <span class="badge status-analyzing badge-status">
+                                        <i class="bi bi-gear-fill"></i> 分析中
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-warning progress-bar-striped progress-bar-animated"
+                                             style="width: 65%"></div>
+                                    </div>
+                                    <small class="text-muted">65%</small>
+                                </td>
+                                <td>
+                                    <small>2026-01-23 16:45</small>
+                                </td>
+                                <td class="text-center">
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-link text-secondary" type="button"
+                                                data-bs-toggle="dropdown" onclick="event.stopPropagation()">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li>
+                                                <a class="dropdown-item" href="user-task-detail.html?id=01J2">
+                                                    <i class="bi bi-eye"></i> 查看详情
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- 任务行 3: 获取数据 -->
+                            <tr onclick="window.location.href='user-task-detail.html?id=01J3'">
+                                <td>
+                                    <strong>Q4碰撞检测</strong>
+                                </td>
+                                <td>
+                                    <small class="text-muted">时序碰撞分析管线</small>
+                                </td>
+                                <td>
+                                    <code class="small">com.demo.app3</code>
+                                </td>
+                                <td>
+                                    <span class="badge status-fetching badge-status">
+                                        <i class="bi bi-cloud-download"></i> 获取数据
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-info progress-bar-striped progress-bar-animated"
+                                             style="width: 30%"></div>
+                                    </div>
+                                    <small class="text-muted">30%</small>
+                                </td>
+                                <td>
+                                    <small>2026-01-23 17:10</small>
+                                </td>
+                                <td class="text-center">
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-link text-secondary" type="button"
+                                                data-bs-toggle="dropdown" onclick="event.stopPropagation()">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li>
+                                                <a class="dropdown-item" href="user-task-detail.html?id=01J3">
+                                                    <i class="bi bi-eye"></i> 查看详情
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- 任务行 4: 失败 -->
+                            <tr onclick="window.location.href='user-task-detail.html?id=01J4'">
+                                <td>
+                                    <strong>异常流量分析</strong>
+                                </td>
+                                <td>
+                                    <small class="text-muted">标准多发检测管线</small>
+                                </td>
+                                <td>
+                                    <code class="small">com.error.app</code>
+                                </td>
+                                <td>
+                                    <span class="badge status-failed badge-status">
+                                        <i class="bi bi-x-circle"></i> 失败
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-danger" style="width: 45%"></div>
+                                    </div>
+                                    <small class="text-danger">数据获取超时</small>
+                                </td>
+                                <td>
+                                    <small>2026-01-23 15:20</small>
+                                </td>
+                                <td class="text-center">
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-link text-secondary" type="button"
+                                                data-bs-toggle="dropdown" onclick="event.stopPropagation()">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li>
+                                                <a class="dropdown-item" href="user-task-detail.html?id=01J4">
+                                                    <i class="bi bi-eye"></i> 查看详情
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item text-warning" href="#"
+                                                   onclick="retryTask('01J4'); return false;">
+                                                    <i class="bi bi-arrow-repeat"></i> 重新运行
+                                                </a>
+                                            </li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <a class="dropdown-item text-danger" href="#"
+                                                   onclick="deleteTask('01J4'); return false;">
+                                                    <i class="bi bi-trash"></i> 删除
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- 任务行 5: 排队中 -->
+                            <tr onclick="window.location.href='user-task-detail.html?id=01J5'">
+                                <td>
+                                    <strong>周末用户行为分析</strong>
+                                </td>
+                                <td>
+                                    <small class="text-muted">高级风险分析管线</small>
+                                </td>
+                                <td>
+                                    <code class="small">com.weekend.app</code>
+                                </td>
+                                <td>
+                                    <span class="badge status-queued badge-status">
+                                        <i class="bi bi-clock"></i> 排队中
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-secondary" style="width: 5%"></div>
+                                    </div>
+                                    <small class="text-muted">等待处理</small>
+                                </td>
+                                <td>
+                                    <small>2026-01-23 17:30</small>
+                                </td>
+                                <td class="text-center">
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-link text-secondary" type="button"
+                                                data-bs-toggle="dropdown" onclick="event.stopPropagation()">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li>
+                                                <a class="dropdown-item" href="user-task-detail.html?id=01J5">
+                                                    <i class="bi bi-eye"></i> 查看详情
+                                                </a>
+                                            </li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <a class="dropdown-item text-danger" href="#"
+                                                   onclick="deleteTask('01J5'); return false;">
+                                                    <i class="bi bi-trash"></i> 删除
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 分页 -->
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div class="text-muted">
+                显示 1-5 条，共 5 条任务
+            </div>
+            <nav>
+                <ul class="pagination mb-0">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#">上一页</a>
+                    </li>
+                    <li class="page-item active">
+                        <a class="page-link" href="#">1</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">2</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">3</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">下一页</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 删除任务
+        function deleteTask(taskId) {
+            if (confirm('确定要删除这个任务吗？此操作不可恢复。')) {
+                alert(`任务 ${taskId} 已删除（仅前端标记删除）`);
+                // 实际应用中，这里会发送 DELETE 请求到后端
+                location.reload();
+            }
+        }
+
+        // 重新运行任务
+        function retryTask(taskId) {
+            if (confirm('确定要重新运行这个任务吗？')) {
+                alert(`任务 ${taskId} 已重新提交到队列`);
+                // 实际应用中，这里会发送 POST 请求到后端
+                location.reload();
+            }
+        }
+
+        // 自动刷新进度（每5秒）
+        setInterval(function() {
+            // 实际应用中，这里会通过 AJAX 获取最新的任务状态
+            console.log('刷新任务状态...');
+        }, 5000);
+    </script>
+</body>
+</html>

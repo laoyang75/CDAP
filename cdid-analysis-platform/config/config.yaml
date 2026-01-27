@@ -1,0 +1,51 @@
+admin:
+  default_password: admin123
+  default_username: admin
+  enabled: true
+  jwt_expire_hours: 24
+  secret_key: your-secret-key-change-in-production
+database:
+  echo: false
+  max_overflow: 10
+  pool_size: 5
+  url: sqlite:///./jobs.db
+gemini:
+  cli_path: gemini
+  fallback_models:
+  - gemini-2.0-flash
+  model: gemini-3-flash-preview
+  skill_name: report
+  skill_path: built-in
+  timeout: 3600
+  version: 0.25.2
+logging:
+  backup_count: 5
+  file: ./logs/app.log
+  format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+  level: INFO
+  max_bytes: 10485760
+server:
+  host: 0.0.0.0
+  log_level: info
+  port: 8000
+  workers: 1
+storage:
+  allowed_extensions:
+  - .xlsx
+  - .xls
+  - .csv
+  max_file_size: 52428800
+  output_dir: ./jobs/outputs
+  upload_dir: ./jobs/uploads
+upstream:
+  base_url: http://172.17.129.204:6829
+  create_task_endpoint: /api/statistical-analysis/v1/task/create
+  get_task_endpoint: /api/statistical-analysis/v1/task/detail
+  retry_interval: 5
+  retry_times: 3
+  timeout: 30
+worker:
+  cleanup_days: 7
+  job_timeout: 3600
+  max_concurrent_jobs: 3
+  poll_interval: 10

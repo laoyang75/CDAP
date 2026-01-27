@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>创建分析任务 - CDID 数据分析平台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .navbar {
+            background-color: #2c3e50;
+        }
+        .card {
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-label {
+            font-weight: 500;
+            color: #495057;
+        }
+        .btn-primary {
+            background-color: #3498db;
+            border: none;
+        }
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        .file-upload-area {
+            border: 2px dashed #cbd5e0;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .file-upload-area:hover {
+            border-color: #3498db;
+            background-color: #ebf5fb;
+        }
+        .file-upload-area.dragover {
+            border-color: #2980b9;
+            background-color: #d6eaf8;
+        }
+        .required::after {
+            content: " *";
+            color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-dark navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-graph-up-arrow"></i> CDID 数据分析平台
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="user-create-task.html">
+                            <i class="bi bi-plus-circle"></i> 创建任务
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="user-task-list.html">
+                            <i class="bi bi-list-ul"></i> 我的任务
+                        </a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center">
+                    <span class="text-white me-3">
+                        <i class="bi bi-person-circle"></i> 张三
+                    </span>
+                    <a href="#" class="btn btn-outline-light btn-sm">退出</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <div class="container mt-4 mb-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- 页面标题 -->
+                <div class="mb-4">
+                    <h2><i class="bi bi-file-earmark-plus"></i> 创建分析任务</h2>
+                    <p class="text-muted">上传 CDID 文件，选择分析管线，系统将自动完成数据获取、分析和报告生成</p>
+                </div>
+
+                <!-- 表单卡片 -->
+                <div class="card">
+                    <div class="card-body p-4">
+                        <form id="createTaskForm">
+                            <!-- 任务名称 -->
+                            <div class="mb-4">
+                                <label for="taskName" class="form-label required">任务名称</label>
+                                <input type="text" class="form-control" id="taskName"
+                                       placeholder="例如：12月数据分析" required>
+                                <div class="form-text">用于标识和区分不同的分析任务</div>
+                            </div>
+
+                            <!-- 分析管线 -->
+                            <div class="mb-4">
+                                <label for="pipeline" class="form-label required">分析管线</label>
+                                <select class="form-select" id="pipeline" required>
+                                    <option value="" selected disabled>请选择分析管线</option>
+                                    <option value="pipeline_1">标准多发检测管线</option>
+                                    <option value="pipeline_2">高级风险分析管线</option>
+                                    <option value="pipeline_3">时序碰撞分析管线</option>
+                                </select>
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle"></i>
+                                    不同管线采用不同的分析算法和报告模板
+                                </div>
+                            </div>
+
+                            <!-- 客户名称 -->
+                            <div class="mb-4">
+                                <label for="clientName" class="form-label required">客户名称</label>
+                                <input type="text" class="form-control" id="clientName"
+                                       placeholder="输入客户名称进行搜索..." required
+                                       autocomplete="off" list="clientList">
+                                <datalist id="clientList">
+                                    <option value="示例客户A">
+                                    <option value="示例客户B">
+                                    <option value="示例客户C">
+                                    <option value="测试客户D">
+                                </datalist>
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle"></i>
+                                    输入客户名称，系统将自动匹配并填充对应的包名
+                                </div>
+                            </div>
+
+                            <!-- 包名（自动填充） -->
+                            <div class="mb-4">
+                                <label for="packageName" class="form-label required">应用包名</label>
+                                <input type="text" class="form-control" id="packageName"
+                                       placeholder="选择客户后自动填充" required readonly>
+                                <div class="form-text">
+                                    此字段根据客户名称自动填充，如需手动修改请点击
+                                    <button type="button" class="btn btn-link btn-sm p-0" id="unlockPackageName">
+                                        解锁编辑
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- CDID 文件上传 -->
+                            <div class="mb-4">
+                                <label class="form-label required">CDID 文件</label>
+                                <div class="file-upload-area" id="fileUploadArea">
+                                    <input type="file" class="d-none" id="cdidFile" accept=".csv,.xlsx" required>
+                                    <i class="bi bi-cloud-upload fs-1 text-muted"></i>
+                                    <p class="mt-3 mb-2">
+                                        <strong>点击或拖拽文件到此处上传</strong>
+                                    </p>
+                                    <p class="text-muted mb-0">
+                                        支持格式：CSV、XLSX（最大 50MB）
+                                    </p>
+                                </div>
+                                <div id="fileInfo" class="mt-2 d-none">
+                                    <div class="alert alert-success mb-0">
+                                        <i class="bi bi-check-circle"></i>
+                                        <span id="fileName"></span>
+                                        <button type="button" class="btn-close float-end" id="removeFile"></button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 时间范围 -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <label for="startDate" class="form-label required">开始日期</label>
+                                    <input type="date" class="form-control" id="startDate" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="endDate" class="form-label required">结束日期</label>
+                                    <input type="date" class="form-control" id="endDate" required>
+                                </div>
+                            </div>
+
+                            <!-- 数据类型 -->
+                            <div class="mb-4">
+                                <label class="form-label required">数据类型</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="dna" id="typeDNA" checked>
+                                    <label class="form-check-label" for="typeDNA">
+                                        DNA（设备网络活动）
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="daa" id="typeDAA">
+                                    <label class="form-check-label" for="typeDAA">
+                                        DAA（设备应用活动）
+                                    </label>
+                                </div>
+                                <div class="form-text">
+                                    至少选择一项数据类型
+                                </div>
+                            </div>
+
+                            <!-- 提交按钮 -->
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="button" class="btn btn-outline-secondary me-md-2"
+                                        onclick="window.location.href='user-task-list.html'">
+                                    <i class="bi bi-x-circle"></i> 取消
+                                </button>
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-rocket"></i> 创建任务
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 提示信息 -->
+                <div class="alert alert-info mt-4">
+                    <i class="bi bi-lightbulb"></i>
+                    <strong>提示：</strong>
+                    任务创建后将进入队列，系统会自动调用内网 API 获取数据、执行分析脚本并生成报告。
+                    整个过程可能需要几分钟到几十分钟，请耐心等待。
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 客户-包名映射表（实际应用中从后端API获取）
+        const clientPackageMap = {
+            '示例客户A': 'com.example.clienta',
+            '示例客户B': 'com.example.clientb',
+            '示例客户C': 'com.example.clientc',
+            '测试客户D': 'com.test.clientd'
+        };
+
+        // 客户名称选择后自动填充包名
+        const clientNameInput = document.getElementById('clientName');
+        const packageNameInput = document.getElementById('packageName');
+        const unlockBtn = document.getElementById('unlockPackageName');
+
+        clientNameInput.addEventListener('input', function() {
+            const clientName = this.value.trim();
+            if (clientPackageMap[clientName]) {
+                packageNameInput.value = clientPackageMap[clientName];
+                packageNameInput.classList.add('is-valid');
+                packageNameInput.classList.remove('is-invalid');
+            } else {
+                packageNameInput.value = '';
+                packageNameInput.classList.remove('is-valid');
+            }
+        });
+
+        // 解锁包名手动编辑
+        unlockBtn.addEventListener('click', function() {
+            packageNameInput.removeAttribute('readonly');
+            packageNameInput.focus();
+            this.textContent = '已解锁';
+            this.disabled = true;
+        });
+
+        // 文件上传交互
+        const fileUploadArea = document.getElementById('fileUploadArea');
+        const cdidFile = document.getElementById('cdidFile');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const removeFile = document.getElementById('removeFile');
+
+        // 点击上传区域
+        fileUploadArea.addEventListener('click', () => cdidFile.click());
+
+        // 文件选择
+        cdidFile.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                showFileInfo(this.files[0]);
+            }
+        });
+
+        // 拖拽上传
+        fileUploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('dragover');
+        });
+
+        fileUploadArea.addEventListener('dragleave', function() {
+            this.classList.remove('dragover');
+        });
+
+        fileUploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) {
+                cdidFile.files = e.dataTransfer.files;
+                showFileInfo(e.dataTransfer.files[0]);
+            }
+        });
+
+        // 显示文件信息
+        function showFileInfo(file) {
+            fileName.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+            fileInfo.classList.remove('d-none');
+            fileUploadArea.style.display = 'none';
+        }
+
+        // 移除文件
+        removeFile.addEventListener('click', function() {
+            cdidFile.value = '';
+            fileInfo.classList.add('d-none');
+            fileUploadArea.style.display = 'block';
+        });
+
+        // 表单提交
+        document.getElementById('createTaskForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // 验证数据类型至少选择一项
+            const dna = document.getElementById('typeDNA').checked;
+            const daa = document.getElementById('typeDAA').checked;
+
+            if (!dna && !daa) {
+                alert('请至少选择一种数据类型');
+                return;
+            }
+
+            // 验证日期范围
+            const startDate = new Date(document.getElementById('startDate').value);
+            const endDate = new Date(document.getElementById('endDate').value);
+
+            if (startDate > endDate) {
+                alert('开始日期不能晚于结束日期');
+                return;
+            }
+
+            // 模拟提交
+            alert('任务创建成功！正在跳转到任务详情页...');
+            // 实际应用中，这里会发送 POST 请求到后端，然后跳转到任务详情页
+            window.location.href = 'user-task-detail.html?id=01J1A2B3C4D5E6F7G8H9K0M1';
+        });
+
+        // 设置默认日期（最近7天）
+        const today = new Date();
+        const lastWeek = new Date(today);
+        lastWeek.setDate(lastWeek.getDate() - 7);
+
+        document.getElementById('endDate').valueAsDate = today;
+        document.getElementById('startDate').valueAsDate = lastWeek;
+    </script>
+</body>
+</html>

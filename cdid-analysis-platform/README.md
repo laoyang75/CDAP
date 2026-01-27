@@ -1,97 +1,196 @@
 # CDID 数据分析平台
 
-**版本**: v0.1.0
-**状态**: 方案设计阶段 - 等待技术细节确认
+CDID Data Analysis Platform - 完整版（用户端 + 管理端）
 
 ---
 
-## 📋 项目概述
+## ⚠️ 重要提示
 
-将基于 Gemini CLI Skills 的命令行数据分析工具，包装成 **Web 服务**，降低使用门槛。
+**请使用 Web 启动器，不要使用 GUI 启动器（会崩溃）**
 
-**核心流程**：
-```
-用户上传 CDID 文件 → Python 后端 → 调用内网 API → 数据分析 → Gemini CLI 生成报告
+```bash
+./run_web.sh
 ```
 
----
-
-## 📁 当前文档
-
-| 文档 | 说明 | 状态 |
-|------|------|------|
-| [方案设计.md](docs/方案设计.md) | 完整架构设计（8000字） | ✅ 已完成 |
-| [待确认问题清单.md](docs/待确认问题清单.md) | 20 个待确认问题 | ⏸ 等待填写 |
-| [RESUME_PROMPT.md](docs/RESUME_PROMPT.md) | 恢复上下文的 Prompt | ✅ 已完成 |
+详见：[⚠️重要-请勿使用GUI启动器.md](./⚠️重要-请勿使用GUI启动器.md)
 
 ---
 
-## 🎯 下一步行动
+## 功能特性
 
-### 1. 填写问题清单（优先）
+### 用户端
+- 📤 **任务创建**: 上传 CDID 数据文件，创建分析任务
+- 📊 **任务列表**: 查看所有任务及其状态
+- 🔍 **任务详情**: 实时查看任务进度和详细信息
+- 📑 **报告下载**: 下载 HTML 格式的分析报告
 
-请打开 `docs/待确认问题清单.md`，填写以下优先级最高的问题：
+### 管理端
+- 👥 **用户管理**: 用户 CRUD 操作，角色管理
+- ⚙️ **配置管理**: 系统配置参数管理
+- 📈 **任务监控**: 实时任务统计和监控
+- 🔄 **流程管理**: 自定义分析流程配置
+- 📝 **脚本编辑**: Python 分析脚本在线编辑
 
-**Gemini CLI 配置**（Q1-Q3）：
-- Q1: Gemini CLI 是否已安装？版本？
-- Q2: 是否需要 API Key？
-- Q3: 管道输入方式是否可行？
+## 技术栈
 
-**内网 API 配置**（Q4-Q7）：
-- Q4: 是否需要认证？
-- Q5: 是否有调用频率限制？
-- Q7: `start/end` 参数是否必填？
+- **后端框架**: FastAPI
+- **数据库**: SQLite (可升级到 PostgreSQL)
+- **数据分析**: Pandas
+- **报告生成**: Gemini CLI
+- **认证**: JWT + bcrypt
+- **前端**: Bootstrap 5 + Vanilla JS
 
-**数据分析算法**（Q8-Q10）：
-- Q8: "多发检测"的具体定义？
-- Q9: "碰撞检测"的具体定义？
-- Q10: "风险检测"的具体定义？
+## 🚀 快速开始（推荐）
 
-### 2. 方案确认
+### 使用 Web 启动器
 
-填写完成后，审核 `docs/方案设计.md`，确认架构是否符合需求。
+```bash
+./run_web.sh
+```
 
-### 3. 开始开发
+启动后会自动打开浏览器访问 http://localhost:5555，在界面中点击"启动服务"即可。
 
-技术细节确认后，按以下顺序开发：
-1. 内网 API 客户端（`src/worker/insight_client.py`）
-2. Python 数据分析（`src/worker/analyzer.py`）
-3. Gemini CLI 调用（`src/worker/gemini_reporter.py`）
-4. FastAPI + 数据库
-5. Worker 主循环
-6. Web UI
-7. 集成测试
-8. Docker 部署
-
----
-
-## 🔄 重新启动项目（恢复上下文）
-
-如果 Claude Code 重新启动，使用以下步骤快速恢复：
-
-1. 打开 `docs/RESUME_PROMPT.md`
-2. 复制灰色框内的完整 prompt
-3. 在新对话中发送给 Claude
-4. Claude 会自动恢复项目上下文
+**详细使用说明**: 查看 `启动器说明.md`
 
 ---
 
-## 📊 技术栈
+## 📋 前置要求
 
-- **Web 框架**: FastAPI
-- **模板引擎**: Jinja2
-- **前端**: Bootstrap 5 + 原生 JS
-- **数据库**: SQLite (MVP) → PostgreSQL
-- **数据分析**: Pandas + NumPy
-- **报告生成**: Gemini CLI (subprocess + 管道)
-- **部署**: Docker
+- Python 3.9+（推荐 3.11+）
+- Gemini CLI 0.25.2+
+- 内网访问权限（访问 http://172.17.129.204:6829）
+
+**注意**：Web 启动器会自动检查和配置环境。
 
 ---
 
-## 📞 联系方式
+## 🛠️ 手动安装（可选）
 
-如有问题，请在对话中提出，或填写"待确认问题清单"后反馈。
+如果需要手动安装：
+
+1. 创建虚拟环境
+\`\`\`bash
+python3 -m venv venv
+source venv/bin/activate
+\`\`\`
+
+2. 安装依赖
+\`\`\`bash
+pip install -r requirements.txt
+\`\`\`
+
+3. 部署 Gemini CLI Skill
+\`\`\`bash
+mkdir -p ~/.gemini/skills/duofa-panduan
+cp skills/duofa-panduan/SKILL.md ~/.gemini/skills/duofa-panduan/
+\`\`\`
 
 ---
 
-**当前状态**: 等待用户填写问题清单 → 开始开发
+## 🚀 启动方式
+
+### 方式 1: Web 启动器（推荐）⭐
+
+\`\`\`bash
+./run_web.sh
+\`\`\`
+
+### 方式 2: 命令行启动器
+
+\`\`\`bash
+python3 launcher.py
+\`\`\`
+
+### 方式 3: 直接启动（开发模式）
+
+\`\`\`bash
+./dev.sh
+\`\`\`
+
+### 方式 4: Docker 部署
+
+\`\`\`bash
+docker-compose up -d
+\`\`\`
+
+---
+
+## 🌐 访问应用
+
+- **Web 启动器**: http://localhost:5555 （管理服务）
+- **用户端**: http://localhost:8000 （主应用）
+- **API 文档**: http://localhost:8000/docs
+
+---
+
+## 🔐 默认管理员账户
+
+- **用户名**: admin
+- **密码**: admin123
+
+⚠️ **重要**: 首次登录后请立即修改密码！
+
+---
+
+## 📚 文档
+
+**查看完整文档索引**: [docs/INDEX.md](docs/INDEX.md)
+
+### 快速链接
+- [快速启动指南](docs/guides/快速启动指南.md) - 最快速的入门方式
+- [启动器说明](docs/guides/启动器说明.md) - 三种启动器详细对比
+- [问题修复总结](docs/fixes/问题修复总结.md) - 所有已修复问题
+
+### 开发者
+- [HANDOFF_TO_AGENT.md](HANDOFF_TO_AGENT.md) - 🔴 项目移交文档（代码审计）
+
+---
+
+## 🔧 诊断工具
+
+运行性能诊断：
+
+```bash
+source venv/bin/activate
+python3 diagnose.py
+```
+
+---
+
+## 📁 端口说明
+
+- **8000** - 主应用端口（API + 用户界面）
+- **5555** - Web 启动器端口（管理界面）
+
+---
+
+## ❓ 常见问题
+
+### Q: tkinter 报错怎么办？
+
+如果遇到：
+```
+macOS 26 (2602) or later required, have instead 16 (1602) !
+Abort trap: 6
+```
+
+请使用 **Web 启动器** 代替：
+```bash
+./run_web.sh
+```
+
+### Q: 页面加载慢？
+
+✅ **已解决！** 最新版本已优化，页面加载 < 200ms。
+
+详见：`性能优化报告.md`
+
+### Q: 如何停止服务？
+
+使用 Web 启动器 (http://localhost:5555)，点击"停止服务"按钮。
+
+---
+
+## 许可证
+
+MIT License

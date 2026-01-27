@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>任务监控 - CDID 数据分析平台（后台）</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .navbar {
+            background-color: #c0392b;
+        }
+        .sidebar {
+            min-height: calc(100vh - 56px);
+            background-color: #2c3e50;
+            padding: 20px 0;
+        }
+        .sidebar .nav-link {
+            color: #ecf0f1;
+            padding: 12px 20px;
+            transition: all 0.3s;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background-color: #34495e;
+            color: #fff;
+        }
+        .sidebar .nav-link i {
+            margin-right: 10px;
+            width: 20px;
+        }
+        .card {
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status-badge {
+            font-size: 0.85rem;
+            padding: 0.35em 0.65em;
+        }
+        .error-log {
+            max-height: 400px;
+            overflow-y: auto;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+        }
+        .log-entry {
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #333;
+        }
+        .log-error {
+            color: #f44747;
+        }
+        .log-warning {
+            color: #ff9800;
+        }
+        .log-info {
+            color: #4fc3f7;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-dark navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-shield-lock"></i> CDID 数据分析平台 - 后台管理
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="user-create-task.html">
+                            <i class="bi bi-box-arrow-right"></i> 返回用户界面
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> 管理员
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#">个人设置</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#">退出登录</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <div class="col-md-2 sidebar">
+                <nav class="nav flex-column">
+                    <a class="nav-link" href="admin-pipeline-management.html">
+                        <i class="bi bi-diagram-3"></i> 管线管理
+                    </a>
+                    <a class="nav-link" href="admin-script-editor.html">
+                        <i class="bi bi-file-code"></i> 脚本编辑
+                    </a>
+                    <a class="nav-link" href="admin-client-config.html">
+                        <i class="bi bi-building"></i> 客户配置
+                    </a>
+                    <a class="nav-link" href="admin-user-management.html">
+                        <i class="bi bi-people"></i> 用户管理
+                    </a>
+                    <a class="nav-link active" href="admin-task-monitoring.html">
+                        <i class="bi bi-activity"></i> 任务监控
+                    </a>
+                    <div class="mt-4 border-top pt-3">
+                        <a class="nav-link" href="#">
+                            <i class="bi bi-gear"></i> 系统设置
+                        </a>
+                        <a class="nav-link" href="#">
+                            <i class="bi bi-file-text"></i> 系统日志
+                        </a>
+                    </div>
+                </nav>
+            </div>
+
+            <!-- 主内容区 -->
+            <div class="col-md-10 p-4">
+                <!-- 页面标题 -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h2><i class="bi bi-activity"></i> 任务监控</h2>
+                        <p class="text-muted mb-0">监控所有用户的任务执行状态和错误日志</p>
+                    </div>
+                    <div>
+                        <button class="btn btn-outline-secondary" onclick="refreshData()">
+                            <i class="bi bi-arrow-clockwise"></i> 刷新
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 统计卡片 -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h3 class="mb-0 text-primary">127</h3>
+                                <p class="text-muted mb-0">今日任务总数</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h3 class="mb-0 text-warning">5</h3>
+                                <p class="text-muted mb-0">正在执行</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h3 class="mb-0 text-success">115</h3>
+                                <p class="text-muted mb-0">已完成</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h3 class="mb-0 text-danger">7</h3>
+                                <p class="text-muted mb-0">失败</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 筛选区域 -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <select class="form-select form-select-sm">
+                                    <option value="">全部状态</option>
+                                    <option value="queued">排队中</option>
+                                    <option value="fetching">获取数据</option>
+                                    <option value="analyzing">分析中</option>
+                                    <option value="reporting">生成报告</option>
+                                    <option value="done">已完成</option>
+                                    <option value="failed" selected>失败</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select form-select-sm">
+                                    <option value="">全部用户</option>
+                                    <option value="user1">张三</option>
+                                    <option value="user2">李四</option>
+                                    <option value="user3">王五</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select form-select-sm">
+                                    <option value="">全部管线</option>
+                                    <option value="pipeline1">标准多发检测管线</option>
+                                    <option value="pipeline2">高级风险分析管线</option>
+                                    <option value="pipeline3">时序碰撞分析管线</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-sm btn-primary w-100">
+                                    <i class="bi bi-search"></i> 搜索
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 任务列表 -->
+                <div class="card mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-exclamation-triangle text-danger"></i>
+                            失败任务列表（共 7 个）
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 20%">任务 ID</th>
+                                        <th style="width: 15%">用户</th>
+                                        <th style="width: 20%">管线</th>
+                                        <th style="width: 12%">失败阶段</th>
+                                        <th style="width: 23%">错误信息</th>
+                                        <th style="width: 10%" class="text-center">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <code class="small">01J4...K0M1</code>
+                                            <br>
+                                            <small class="text-muted">2026-01-23 15:20</small>
+                                        </td>
+                                        <td>张三</td>
+                                        <td>
+                                            <small>标准多发检测管线</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info status-badge">获取数据</span>
+                                        </td>
+                                        <td>
+                                            <small class="text-danger">
+                                                内网 API 超时（30分钟）
+                                            </small>
+                                        </td>
+                                        <td class="text-center">
+                                            <button class="btn btn-sm btn-outline-primary"
+                                                    onclick="viewTaskDetail('01J4')">
+                                                查看
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <code class="small">01J5...K0M2</code>
+                                            <br>
+                                            <small class="text-muted">2026-01-23 16:05</small>
+                                        </td>
+                                        <td>李四</td>
+                                        <td>
+                                            <small>高级风险分析管线</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-warning status-badge">分析中</span>
+                                        </td>
+                                        <td>
+                                            <small class="text-danger">
+                                                Python 脚本错误：KeyError 'rc_rules'
+                                            </small>
+                                        </td>
+                                        <td class="text-center">
+                                            <button class="btn btn-sm btn-outline-primary"
+                                                    onclick="viewTaskDetail('01J5')">
+                                                查看
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <code class="small">01J6...K0M3</code>
+                                            <br>
+                                            <small class="text-muted">2026-01-23 16:45</small>
+                                        </td>
+                                        <td>王五</td>
+                                        <td>
+                                            <small>时序碰撞分析管线</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-purple status-badge" style="background-color: #9b59b6;">生成报告</span>
+                                        </td>
+                                        <td>
+                                            <small class="text-danger">
+                                                Gemini CLI 调用失败：API 限额超出
+                                            </small>
+                                        </td>
+                                        <td class="text-center">
+                                            <button class="btn btn-sm btn-outline-primary"
+                                                    onclick="viewTaskDetail('01J6')">
+                                                查看
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 错误日志 -->
+                <div class="card">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-file-text"></i> 系统错误日志（最近 20 条）
+                        </h5>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="downloadLogs()">
+                            <i class="bi bi-download"></i> 下载完整日志
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="error-log">
+                            <div class="log-entry">
+                                <span class="log-error">[ERROR]</span>
+                                <span class="text-muted">2026-01-23 16:45:32</span> -
+                                <span>Task 01J6...K0M3: Gemini CLI调用失败</span>
+                                <br>
+                                <span class="text-muted ms-4">
+                                    Traceback: subprocess.CalledProcessError: Command 'gemini -s impact_report' returned non-zero exit status 1
+                                </span>
+                            </div>
+
+                            <div class="log-entry">
+                                <span class="log-error">[ERROR]</span>
+                                <span class="text-muted">2026-01-23 16:05:18</span> -
+                                <span>Task 01J5...K0M2: Python脚本执行错误</span>
+                                <br>
+                                <span class="text-muted ms-4">
+                                    KeyError: 'rc_rules' at line 87 in risk_analyzer.py
+                                </span>
+                            </div>
+
+                            <div class="log-entry">
+                                <span class="log-error">[ERROR]</span>
+                                <span class="text-muted">2026-01-23 15:20:45</span> -
+                                <span>Task 01J4...K0M1: 内网API超时</span>
+                                <br>
+                                <span class="text-muted ms-4">
+                                    TimeoutError: 内网任务在30分钟内未返回结果 (task_id: xxx-yyy-zzz)
+                                </span>
+                            </div>
+
+                            <div class="log-entry">
+                                <span class="log-warning">[WARNING]</span>
+                                <span class="text-muted">2026-01-23 14:55:12</span> -
+                                <span>Worker队列堆积：当前有 8 个任务等待处理</span>
+                            </div>
+
+                            <div class="log-entry">
+                                <span class="log-info">[INFO]</span>
+                                <span class="text-muted">2026-01-23 14:48:12</span> -
+                                <span>Task 01J1...K0M1: 任务完成 (耗时: 17分47秒)</span>
+                            </div>
+
+                            <div class="log-entry">
+                                <span class="log-info">[INFO]</span>
+                                <span class="text-muted">2026-01-23 14:30:25</span> -
+                                <span>Task 01J1...K0M1: 任务创建 (用户: 张三, 管线: 标准多发检测管线)</span>
+                            </div>
+
+                            <div class="log-entry">
+                                <span class="log-warning">[WARNING]</span>
+                                <span class="text-muted">2026-01-23 14:15:08</span> -
+                                <span>内网API响应缓慢：平均响应时间 8.5秒</span>
+                            </div>
+
+                            <div class="log-entry">
+                                <span class="log-error">[ERROR]</span>
+                                <span class="text-muted">2026-01-23 13:42:33</span> -
+                                <span>Task 01J3...K0M5: 数据下载失败</span>
+                                <br>
+                                <span class="text-muted ms-4">
+                                    OSS URL无效或已过期: http://oss.example.com/...
+                                </span>
+                            </div>
+
+                            <div class="log-entry">
+                                <span class="log-info">[INFO]</span>
+                                <span class="text-muted">2026-01-23 13:30:00</span> -
+                                <span>系统启动：Worker进程已启动 (PID: 12345)</span>
+                            </div>
+
+                            <div class="log-entry">
+                                <span class="log-info">[INFO]</span>
+                                <span class="text-muted">2026-01-23 13:30:00</span> -
+                                <span>系统启动：API Server监听端口 8000</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 查看任务详情
+        function viewTaskDetail(taskId) {
+            window.open(`user-task-detail.html?id=${taskId}`, '_blank');
+        }
+
+        // 刷新数据
+        function refreshData() {
+            alert('刷新任务监控数据...');
+            location.reload();
+        }
+
+        // 下载日志
+        function downloadLogs() {
+            alert('开始下载完整系统日志...');
+            // 实际应用中，这里会下载日志文件
+        }
+
+        // 自动刷新（每30秒）
+        setInterval(function() {
+            console.log('自动刷新任务监控数据...');
+            // 实际应用中，这里会通过AJAX更新数据
+        }, 30000);
+    </script>
+</body>
+</html>
