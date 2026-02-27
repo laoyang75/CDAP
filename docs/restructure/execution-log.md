@@ -28,11 +28,13 @@
 - `docs/restructure/git-plan.md`
 - `docs/restructure/execution-log.md`
 - `docs/restructure/verification-checklist.md`
+7. 提交与推送：
+- `git commit -m "refactor: archive legacy directories and agent outputs"`
+- `git commit -m "docs: add restructure docs and finalize legacy path migration"`
+- `git push -u cdap refactor/restructure-docs`
 
 ## 执行结果
 - 历史目录已归档，核心运行目录未改动。
 - Git 远端已新增 `cdap`，原有 `origin` 保持不变。
 - 现有业务代码改动保持原样，未被本次重构覆盖。
-
-## 未执行项
-- 尚未完成 push（需在本地提交后执行 `git push -u cdap refactor/restructure-docs`）。
+- 分支 `refactor/restructure-docs` 已成功推送到 `cdap` 远端。

@@ -13,7 +13,7 @@
 - [x] 当前分支：`refactor/restructure-docs`
 - [x] 远端 `cdap` 已配置：`https://github.com/laoyang75/CDAP.git`
 - [x] 原远端 `origin` 保持不变
-- [ ] 重构提交已 push 到 `cdap/refactor/restructure-docs`（待执行）
+- [x] 重构提交已 push 到 `cdap/refactor/restructure-docs`
 
 ## 运行风险验证
 - [x] 未迁移 `cdid-analysis-platform/` 路径，核心启动路径保持不变
