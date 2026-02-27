@@ -1,0 +1,3 @@
+.DS_Store
+artifacts/agent_outputs/*.patch
+artifacts/agent_outputs/*.code-workspace

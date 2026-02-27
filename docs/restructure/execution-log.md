@@ -32,9 +32,17 @@
 - `git commit -m "refactor: archive legacy directories and agent outputs"`
 - `git commit -m "docs: add restructure docs and finalize legacy path migration"`
 - `git push -u cdap refactor/restructure-docs`
+8. 根据确认执行彻底清理：
+- `git rm -f delivery.zip`
+- `git rm -r -f delivery`
+- 清理未跟踪残留：`git clean -fdx delivery`
+9. 更新文档：
+- 更新 `README.md` 与 `docs/delivery/STATUS.md`
+- 更新 `docs/restructure/` 相关文档并新增边界评估文档
 
 ## 执行结果
 - 历史目录已归档，核心运行目录未改动。
 - Git 远端已新增 `cdap`，原有 `origin` 保持不变。
 - 现有业务代码改动保持原样，未被本次重构覆盖。
 - 分支 `refactor/restructure-docs` 已成功推送到 `cdap` 远端。
+- `delivery/` 与 `delivery.zip` 已从仓库彻底移除。

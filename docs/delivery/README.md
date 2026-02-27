@@ -3,7 +3,7 @@
 本目录用于沉淀历史线下交付文档。当前 Git 开发主目录为 `cdid-analysis-platform/`。
 
 ## 文档
-- `STATUS.md`：是否继续保留 `delivery/` 的决策与策略
+- `STATUS.md`：`delivery/` 已移除的结论与后续交付策略
 - `OFFLINE_DELIVERY_README.md`：历史 `delivery/README.md` 内容
 - `OFFLINE_QUICKSTART.md`：历史线下交付快速启动说明
 - `OFFLINE_HANDOFF.md`：历史线下交付接手说明

@@ -2,7 +2,7 @@
 
 ## 目录与资产验证
 - [x] 核心目录仍存在：`cdid-analysis-platform/`
-- [x] 交付目录仍存在：`delivery/cdid-analysis-platform/`
+- [x] 交付目录已移除：`delivery/`
 - [x] 历史项目已归档：`archive/legacy/data-insight-service/`
 - [x] 历史规格已归档：`archive/legacy/specs_v0_1/`
 - [x] 历史需求已归档：`archive/legacy/xuqiu/`

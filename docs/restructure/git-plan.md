@@ -11,6 +11,8 @@
 - 内容：历史目录和产物迁移（`git mv` 为主）。
 2. `docs: add stage1 restructure inventory and migration docs`
 - 内容：`docs/restructure/` 文档与 `docs/prompt/` 更新。
+3. `refactor: remove legacy delivery duplicate tree`
+- 内容：删除 `delivery/` 与 `delivery.zip`，彻底切换到 Git 单轨开发。
 
 ## 实际提交策略（避免混入既有改动）
 - 仅暂存本次结构治理相关路径：
@@ -20,9 +22,7 @@
   - `docs/restructure/`
 - 不暂存你已有业务改动路径：
   - `cdid-analysis-platform/`（已有改动）
-  - `delivery/`（已有改动）
   - `.DS_Store`
-  - `delivery.zip` 删除记录（待你确认）
 
 ## 推送命令
 ```bash
