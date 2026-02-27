@@ -1,10 +1,11 @@
-# 交付目录
+# 交付目录（历史保留）
 
-可交付代码在：`delivery/cdid-analysis-platform/`
+`delivery/` 是历史线下交付目录，当前已不作为主开发目录。
 
-启动方式（唯一入口）：
-- `python launcher_web.py`
-- 打开启动器：`http://localhost:5555`
+请使用仓库根目录说明与统一文档：
+- 根目录：`README.md`
+- 交付策略：`docs/delivery/STATUS.md`
+- 交付文档索引：`docs/delivery/README.md`
 
-更详细的接手说明见：`delivery/cdid-analysis-platform/docs/HANDOFF.md`
-
+当前主开发目录：
+- `cdid-analysis-platform/`
