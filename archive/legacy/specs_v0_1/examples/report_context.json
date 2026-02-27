@@ -1,0 +1,17 @@
+{
+  "context_version": "report-context-v1",
+  "job_id": "01JEXAMPLE",
+  "dataset_hash": "sha256:EXAMPLE",
+  "generated_at": "2026-01-23T17:02:00Z",
+  "sections": [
+    {
+      "id": "summary",
+      "title": "摘要",
+      "bullets": [
+        "数据集共 12,345 行；imei 缺失率 0.82。"
+      ],
+      "refs": []
+    }
+  ],
+  "warnings_rollup": []
+}

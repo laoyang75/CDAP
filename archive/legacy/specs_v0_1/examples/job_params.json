@@ -1,0 +1,27 @@
+{
+  "package_name": "com.example.app",
+  "time_range": {
+    "start": "2026-01-01",
+    "end": "2026-01-07"
+  },
+  "message_types": [
+    "dna",
+    "daa"
+  ],
+  "skills": {
+    "enabled": [
+      "basic_stats"
+    ],
+    "params": {
+      "basic_stats": {
+        "top_k": 20
+      }
+    }
+  },
+  "report": {
+    "format": "html",
+    "llm": {
+      "enabled": false
+    }
+  }
+}

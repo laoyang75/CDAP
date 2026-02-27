@@ -1,0 +1,187 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Data Insight Service Configuration Schema",
+  "type": "object",
+  "required": ["version", "api", "database", "worker", "storage", "skills", "logging"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "api": {
+      "type": "object",
+      "required": ["host", "port"],
+      "properties": {
+        "host": {"type": "string"},
+        "port": {"type": "integer", "minimum": 1, "maximum": 65535},
+        "reload": {"type": "boolean"},
+        "workers": {"type": "integer", "minimum": 1}
+      }
+    },
+    "database": {
+      "type": "object",
+      "required": ["url"],
+      "properties": {
+        "url": {"type": "string"},
+        "pool_size": {"type": "integer", "minimum": 1},
+        "max_overflow": {"type": "integer", "minimum": 0},
+        "echo": {"type": "boolean"}
+      }
+    },
+    "worker": {
+      "type": "object",
+      "required": ["poll_interval", "concurrency", "timeouts"],
+      "properties": {
+        "poll_interval": {"type": "integer", "minimum": 1},
+        "concurrency": {"type": "integer", "enum": [1]},
+        "timeouts": {
+          "type": "object",
+          "required": ["fetching", "preprocessing", "analyzing", "reporting"],
+          "properties": {
+            "fetching": {"type": "integer", "minimum": 1},
+            "preprocessing": {"type": "integer", "minimum": 1},
+            "analyzing": {"type": "integer", "minimum": 1},
+            "reporting": {"type": "integer", "minimum": 1}
+          }
+        },
+        "retries": {
+          "type": "object",
+          "properties": {
+            "fetching": {
+              "type": "object",
+              "properties": {
+                "max_attempts": {"type": "integer", "minimum": 0},
+                "backoff": {"type": "array", "items": {"type": "integer"}}
+              }
+            },
+            "preprocessing": {
+              "type": "object",
+              "properties": {
+                "max_attempts": {"type": "integer", "minimum": 0}
+              }
+            },
+            "reporting": {
+              "type": "object",
+              "properties": {
+                "max_attempts": {"type": "integer", "minimum": 0}
+              }
+            }
+          }
+        }
+      }
+    },
+    "storage": {
+      "type": "object",
+      "required": ["type", "base_path"],
+      "properties": {
+        "type": {"type": "string", "enum": ["local", "s3"]},
+        "base_path": {"type": "string"},
+        "bucket": {"type": "string"},
+        "endpoint": {"type": "string"},
+        "retention": {
+          "type": "object",
+          "properties": {
+            "bundle_days": {"type": "integer", "minimum": 1},
+            "raw_days": {"type": "integer", "minimum": 1},
+            "cleanup_enabled": {"type": "boolean"}
+          }
+        }
+      }
+    },
+    "skills": {
+      "type": "object",
+      "required": ["plugins_dir", "execution"],
+      "properties": {
+        "plugins_dir": {"type": "string"},
+        "default_enabled": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "execution": {
+          "type": "object",
+          "required": ["mode", "parallel"],
+          "properties": {
+            "mode": {"type": "string", "enum": ["inline", "subprocess"]},
+            "parallel": {"type": "boolean", "enum": [false]}
+          }
+        },
+        "default_timeout": {"type": "integer", "minimum": 1}
+      }
+    },
+    "logging": {
+      "type": "object",
+      "required": ["level", "format"],
+      "properties": {
+        "level": {"type": "string", "enum": ["DEBUG", "INFO", "WARNING", "ERROR"]},
+        "format": {"type": "string", "enum": ["json", "text"]},
+        "file": {
+          "type": "object",
+          "properties": {
+            "enabled": {"type": "boolean"},
+            "path": {"type": "string"},
+            "rotation": {"type": "string"},
+            "retention": {"type": "string"}
+          }
+        },
+        "redact_fields": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    },
+    "upstream": {
+      "type": "object",
+      "properties": {
+        "base_url": {"type": "string"},
+        "endpoints": {
+          "type": "object",
+          "properties": {
+            "create_task": {"type": "string"},
+            "query_task": {"type": "string"},
+            "download": {"type": "string"}
+          }
+        },
+        "timeout": {"type": "integer", "minimum": 1},
+        "retries": {"type": "integer", "minimum": 0}
+      }
+    },
+    "report": {
+      "type": "object",
+      "properties": {
+        "llm": {
+          "type": "object",
+          "properties": {
+            "enabled": {"type": "boolean"},
+            "provider": {"type": "string"},
+            "model": {"type": "string"},
+            "api_key": {"type": "string"}
+          }
+        },
+        "template_dir": {"type": "string"}
+      }
+    },
+    "ui": {
+      "type": "object",
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "title": {"type": "string"},
+        "page_size": {"type": "integer", "minimum": 1},
+        "poll_interval": {"type": "integer", "minimum": 100}
+      }
+    },
+    "testing": {
+      "type": "object",
+      "properties": {
+        "simulate_error": {
+          "type": "object",
+          "properties": {
+            "enabled": {"type": "boolean"},
+            "stage": {"type": "string"},
+            "error_code": {"type": "string"},
+            "probability": {"type": "number", "minimum": 0, "maximum": 1}
+          }
+        }
+      }
+    }
+  }
+}

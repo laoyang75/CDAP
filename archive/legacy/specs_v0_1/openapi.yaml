@@ -1,0 +1,148 @@
+openapi: 3.0.3
+info:
+  title: Data Insight Service (Python Skills)
+  version: "0.1.0"
+servers:
+  - url: /
+paths:
+  /jobs:
+    post:
+      summary: Create a job
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, params]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                params:
+                  type: string
+                  description: JSON string
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobCreated"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /jobs/{job_id}:
+    get:
+      summary: Get job status
+      parameters:
+        - in: path
+          name: job_id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobStatus"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /jobs/{job_id}/report:
+    get:
+      summary: Get HTML report
+      parameters:
+        - in: path
+          name: job_id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            text/html:
+              schema:
+                type: string
+        "409":
+          description: Not Ready
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /jobs/{job_id}/bundle:
+    get:
+      summary: Get bundle.zip
+      parameters:
+        - in: path
+          name: job_id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+        "409":
+          description: Not Ready
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    Error:
+      type: object
+      required: [code, message, details, retryable]
+      properties:
+        code: { type: string }
+        message: { type: string }
+        details: { type: object, additionalProperties: true }
+        retryable: { type: boolean }
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error: { $ref: "#/components/schemas/Error" }
+    JobCreated:
+      type: object
+      required: [job_id, status, created_at, links]
+      properties:
+        job_id: { type: string }
+        status: { type: string }
+        created_at: { type: string }
+        links:
+          type: object
+          additionalProperties: true
+    JobStatus:
+      type: object
+      required: [job_id, status, stage, progress, created_at, updated_at, artifacts, error]
+      properties:
+        job_id: { type: string }
+        status: { type: string }
+        stage: { type: string }
+        progress:
+          type: object
+          required: [percent, message]
+          properties:
+            percent: { type: integer, minimum: 0, maximum: 100 }
+            message: { type: string }
+        created_at: { type: string }
+        updated_at: { type: string }
+        artifacts:
+          type: object
+          additionalProperties: true
+        error:
+          oneOf:
+            - type: "null"
+            - $ref: "#/components/schemas/Error"
